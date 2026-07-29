@@ -9,7 +9,7 @@ import { localPlugin } from "./eslint-rules/index.mjs";
 
 const ROOT = import.meta.dirname;
 
-export default tseslint.config(
+export default tseslint.config([
   {
     ignores: [
       "**/dist/**", "**/build/**", "**/coverage/**", "**/node_modules/**", "**/*.d.ts",
@@ -75,4 +75,4 @@ export default tseslint.config(
       "@typescript-eslint/require-await": "off",
     },
   },
-);
+]);
