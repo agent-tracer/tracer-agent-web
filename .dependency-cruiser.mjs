@@ -1,4 +1,4 @@
-import { FSD, ROOT_DIR } from "./architecture.manifest.mjs";
+import { FSD, HOST_SURFACE, ROOT_DIR } from "./architecture.manifest.mjs";
 
 // 규칙의 피연산자는 레이어 이름뿐이며 슬라이스 이름은 정규식 역참조가 센다.
 
@@ -29,7 +29,7 @@ export default {
       comment: "해석할 수 없는 import는 통과한 것이 아니라 검사되지 않은 것이다",
       severity: "error",
       from: {},
-      to: { couldNotResolve: true },
+      to: { couldNotResolve: true, pathNot: `^${HOST_SURFACE}/` },
     },
 
     ...layerRules,
