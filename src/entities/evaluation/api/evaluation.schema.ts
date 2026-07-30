@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { DatasetDetail, EvaluationDataset, ExperimentDetail, ExperimentPreview, Experiment, PromptDefinition, PromptVersion, PromptFragmentBinding, ExecutionExampleCandidate, RegisterCandidateFragmentVersionResult } from "../model/evaluation.js";
-import { iso, parse, record, status } from "./evaluation.primitives.schema.js";
+import { backend, iso, parse, record, status } from "./evaluation.primitives.schema.js";
 
 export { parseComparison, parseExecutions } from "./evaluation.result.schema.js";
 
@@ -36,7 +36,7 @@ const prompt = z
   .object({
     id: z.string(),
     agentName: z.string(),
-    backend: z.enum(["python", "claude-sdk"]),
+    backend,
     language: z.string(),
     name: z.string(),
     createdAt: iso,
@@ -61,7 +61,7 @@ const fragmentVersion = z.object({
 }).passthrough();
 const fragment = z.object({
   templateKey: z.string(), fragmentSlot: z.string(), definitionKey: z.string(),
-  codeName: z.string(), agentName: z.string(), backend: z.enum(["python", "claude-sdk"]),
+  codeName: z.string(), agentName: z.string(), backend,
   language: z.string(), fragmentName: z.string(), codeDefaultVersion: z.string(),
   codeDefaultHash: z.string().nullable(), versions: z.array(fragmentVersion),
 }).passthrough();
@@ -70,7 +70,7 @@ const variant = z
     id: z.string(),
     name: z.string(),
     agentName: z.string(),
-    backend: z.enum(["python", "claude-sdk"]),
+    backend,
     model: z.string(),
     promptVersionId: z.string().nullable(),
     toolContractVersion: z.string(),

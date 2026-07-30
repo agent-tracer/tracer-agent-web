@@ -2,8 +2,22 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { UiStoreProvider, createUiStore } from "tracerWeb/store";
+import type * as HostEntities from "tracerWeb/entities";
 import type { PromptFragmentBinding, VariantInput } from "~/entities/evaluation/model/evaluation.js";
 import { VariantForm } from "./VariantForm.js";
+
+vi.mock("tracerWeb/entities", async (importActual) => {
+  const actual = await importActual<typeof HostEntities>();
+  return {
+    ...actual,
+    agentUpstream: {
+      ...actual.agentUpstream,
+      useAgentUpstreamsQuery: () => ({
+        data: { upstreams: [{ name: "claude-sdk" }, { name: "python" }] },
+      }),
+    },
+  };
+});
 
 const fragment: PromptFragmentBinding = {
   templateKey: "sdk.task-cleanup.investigator.system",
@@ -58,6 +72,24 @@ describe("VariantForm fragment selectors", () => {
     fireEvent.change(screen.getByRole("combobox", { name: "SDK_SUGGESTION_RULES version" }), { target: { value: "version-v2" } });
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ fragmentSelections: { "sdk.task-cleanup.investigator.system/suggestionRules": "version-v2" } }));
     expect(screen.getByText(new RegExp(`b{10}`))).toBeInTheDocument();
+  });
+  it("배포가 선언한 상류 이름을 그대로 고를 이름으로 낸다", () => {
+    renderForm();
+    const control = screen.getByRole("combobox", { name: "Backend" });
+    expect([...control.querySelectorAll("option")].map((option) => option.textContent)).toEqual([
+      "claude-sdk",
+      "python",
+    ]);
+  });
+  it("조각이 올라온 상류의 이름을 그대로 표시한다", () => {
+    renderForm();
+    expect(screen.getByText("claude-sdk · suggestionRules")).toBeInTheDocument();
+  });
+  it("고른 상류 이름을 그대로 넘긴다", () => {
+    const onChange = vi.fn();
+    renderForm(value, onChange);
+    fireEvent.change(screen.getByRole("combobox", { name: "Backend" }), { target: { value: "python" } });
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ backend: "python" }));
   });
   it("다른 백엔드의 fragment를 표시하지 않는다", () => {
     render(

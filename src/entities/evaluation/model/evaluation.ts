@@ -3,7 +3,8 @@ export type DisclosureClass =
   | "approved-evaluation"
   | "production-masked"
   | "external-disabled";
-export type PromptBackend = "python" | "claude-sdk";
+/** 조각을 올린 상류의 이름이며 배포의 상류 선언이 그 값을 정한다. */
+export type PromptBackend = string;
 export type ExperimentStatus =
   "draft" | "queued" | "running" | "completed" | "failed" | "cancelled";
 export type ExecutionStatus =

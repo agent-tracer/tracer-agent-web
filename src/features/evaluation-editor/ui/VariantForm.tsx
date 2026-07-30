@@ -1,15 +1,12 @@
 import { useState } from "react";
+import { agentUpstream } from "tracerWeb/entities";
 import { useGuidance } from "tracerWeb/store";
 import { GuidanceText } from "tracerWeb/ui";
 import { usePromptVersionsQuery } from "~/entities/evaluation/api/queries.js";
-import type { PromptBackend, PromptDefinition, PromptFragmentBinding, VariantInput } from "~/entities/evaluation/model/evaluation.js";
+import type { PromptDefinition, PromptFragmentBinding, VariantInput } from "~/entities/evaluation/model/evaluation.js";
 
 function selectionKey(fragment: PromptFragmentBinding): string {
   return `${fragment.templateKey}/${fragment.fragmentSlot}`;
-}
-
-function backendLabel(value: PromptBackend): string {
-  return value === "claude-sdk" ? "SDK" : "LAN";
 }
 
 export function VariantForm({
@@ -28,6 +25,8 @@ export function VariantForm({
   promptDefinitions: readonly PromptDefinition[];
 }) {
   const guidance = useGuidance();
+  const upstreams = agentUpstream.useAgentUpstreamsQuery();
+  const catalog = upstreams.data ?? agentUpstream.EMPTY_AGENT_UPSTREAM_CATALOG;
   const [definitionId, setDefinitionId] = useState("");
   const versions = usePromptVersionsQuery(definitionId || null);
   const backendFragments = fragments.filter((fragment) => fragment.backend === value.backend);
@@ -64,15 +63,14 @@ export function VariantForm({
           Backend
           <select
             value={value.backend}
-            onChange={(event) => {
-              const backend = event.target.value;
-              if (backend !== "python" && backend !== "claude-sdk") return;
-              onChange({ ...value, backend, fragmentSelections: {} });
-            }}
+            onChange={(event) =>
+              onChange({ ...value, backend: event.target.value, fragmentSelections: {} })
+            }
             className="rounded-xs border border-hair bg-s1 p-2"
           >
-            <option value="python">LAN · python</option>
-            <option value="claude-sdk">SDK · claude-sdk</option>
+            {catalog.upstreams.map((upstream) => (
+              <option key={upstream.name} value={upstream.name}>{upstream.name}</option>
+            ))}
           </select>
         </label>
         <section aria-labelledby={`${value.name}-fragments`} className="grid gap-2 border-t border-hair pt-2">
@@ -90,7 +88,7 @@ export function VariantForm({
               <div key={selectionKey(fragment)} className="grid gap-1 rounded-xs border border-hair bg-s1 p-2">
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <strong>{fragment.codeName}</strong>
-                  <span className="font-mono text-[10px] text-ink-muted">{backendLabel(fragment.backend)} · {fragment.fragmentSlot}</span>
+                  <span className="font-mono text-[10px] text-ink-muted">{fragment.backend} · {fragment.fragmentSlot}</span>
                 </div>
                 <label className="grid gap-1 text-[11px]">
                   Version

@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export const record = z.record(z.unknown());
 export const iso = z.string().min(1);
+/** 상류의 이름은 배포 선언이 정하므로 화면은 후보를 열거하지 않는다. */
+export const backend = z.string().min(1);
 export const status = z.enum([
   "draft",
   "queued",

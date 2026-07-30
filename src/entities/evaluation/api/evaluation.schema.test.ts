@@ -93,6 +93,35 @@ describe("evaluation response schemas", () => {
     expect(fragment?.codeDefaultHash).toBeNull();
   });
 
+  it("배포가 셋째 상류를 선언한 응답도 파싱한다", () => {
+    const [fragment] = parsePromptFragments({ fragments: [{
+      templateKey: "rust.task-cleanup.investigator.system",
+      fragmentSlot: "suggestionRules",
+      definitionKey: "rust.task-cleanup.suggestion-rules.en",
+      codeName: "RUST_SUGGESTION_RULES",
+      agentName: "task-cleanup",
+      backend: "rust-agent",
+      language: "en",
+      fragmentName: "suggestionRules",
+      codeDefaultVersion: "v1",
+      codeDefaultHash: null,
+      versions: [],
+    }] });
+    expect(fragment?.backend).toBe("rust-agent");
+  });
+
+  it("이름이 비어 있는 상류를 거부한다", () => {
+    expect(() =>
+      parseCreatedPrompt({
+        definition: { id: "p", agentName: "title", backend: "", language: "en", name: "title", createdAt: "2026-01-01" },
+        version: {
+          id: "pv", definitionId: "p", semanticVersion: "1.0.0", content: "prompt",
+          contentHash: "hash", toolContractVersion: "1", outputSchemaVersion: "1", createdAt: "2026-01-01",
+        },
+      }),
+    ).toThrow("Invalid created prompt response");
+  });
+
   it("fragment variant의 null legacy prompt와 selection을 round-trip한다", () => {
     const detail = parseExperimentDetail({
       experiment: {

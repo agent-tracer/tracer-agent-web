@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { agentUpstream } from "tracerWeb/entities";
 import { useDatasetsQuery, useExperimentWorkspaceQuery, useExperimentsQuery, usePromptFragmentsQuery, usePromptsQuery } from "~/entities/evaluation/api/queries.js";
 import { useEvaluationMutations } from "~/entities/evaluation/api/mutations.js";
 import type { ExperimentDetail, VariantInput } from "~/entities/evaluation/model/evaluation.js";
@@ -6,6 +7,22 @@ import { errorMessage } from "../lib/json.js";
 import { readRecentExperiments } from "../lib/recent-experiments.js";
 import { ExperimentRun } from "./ExperimentRun.js";
 import { Field, VariantForm } from "./VariantForm.js";
+
+/** 초안의 두 변형은 배포가 첫째로 선언한 상류에서 출발한다. */
+function draftVariants(backend: string): readonly VariantInput[] {
+  const shared = {
+    agentName: "title-suggestion",
+    backend,
+    model: "default",
+    promptVersionId: "",
+    toolContractVersion: "1",
+    limits: { maxCostUsd: 0.1 },
+  };
+  return [
+    { ...shared, name: "baseline", baseline: true },
+    { ...shared, name: "candidate", baseline: false },
+  ];
+}
 
 export function ExperimentEditor() {
   const datasets = useDatasetsQuery();
@@ -24,28 +41,9 @@ export function ExperimentEditor() {
   const [budget, setBudget] = useState("1");
   const [repetitions, setRepetitions] = useState("1");
   const [error, setError] = useState<string | null>(null);
-  const [variants, setVariants] = useState<readonly VariantInput[]>([
-    {
-      name: "baseline",
-      agentName: "title-suggestion",
-      backend: "python",
-      model: "default",
-      promptVersionId: "",
-      toolContractVersion: "1",
-      limits: { maxCostUsd: 0.1 },
-      baseline: true,
-    },
-    {
-      name: "candidate",
-      agentName: "title-suggestion",
-      backend: "python",
-      model: "default",
-      promptVersionId: "",
-      toolContractVersion: "1",
-      limits: { maxCostUsd: 0.1 },
-      baseline: false,
-    },
-  ]);
+  const upstreams = agentUpstream.useAgentUpstreamsQuery();
+  const [edited, setVariants] = useState<readonly VariantInput[] | null>(null);
+  const variants = edited ?? draftVariants(upstreams.data?.upstreams[0]?.name ?? "");
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!selectedDataset) return;

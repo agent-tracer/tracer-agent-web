@@ -1,5 +1,5 @@
 import { getJson, patchJson, postJson, deleteRequest } from "tracerWeb/api";
-import type { DatasetExportResult, ExampleInput, RegisterCandidateFragmentVersionInput, ReviewSubmission, VariantInput } from "../model/evaluation.js";
+import type { DatasetExportResult, ExampleInput, PromptBackend, RegisterCandidateFragmentVersionInput, ReviewSubmission, VariantInput } from "../model/evaluation.js";
 import { parseComparison, parseCreatedPrompt, parseDatasetDetail, parseDatasets, parseExecutions, parseExperimentDetail, parseExperimentPreview, parseExperiments, parsePrompts, parsePromptVersion, parsePromptVersions, parsePromptFragments, parseExecutionExampleCandidate, parseRegisteredCandidateFragmentVersion } from "./evaluation.schema.js";
 
 // 평가는 에이전트 서비스가 소유하므로 게이트웨이의 에이전트 접두사 아래로 부른다.
@@ -66,7 +66,7 @@ export async function fetchExperiments() {
 export async function createPrompt(input: {
   name: string;
   agentName: string;
-  backend: "python" | "claude-sdk";
+  backend: PromptBackend;
   language: string;
   version: {
     semanticVersion: string;
