@@ -282,6 +282,13 @@ declare module "tracerWeb/entities" {
 
     type AiJobStepRole = "system" | "user" | "assistant" | "tool" | "graph";
 
+    type AiJobStepEventKind =
+      | "node.started"
+      | "node.completed"
+      | "node.failed"
+      | "route.selected"
+      | "validation.failed";
+
     interface AiJobStepToolCall {
       readonly id: string;
       readonly name: string;
@@ -301,7 +308,7 @@ declare module "tracerWeb/entities" {
       readonly outputTokens?: number | undefined;
       readonly stopReason?: string | undefined;
       readonly nodeName?: string | undefined;
-      readonly eventKind?: string | undefined;
+      readonly eventKind?: AiJobStepEventKind | undefined;
       readonly durationMs?: number | undefined;
     }
 
