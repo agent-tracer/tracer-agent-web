@@ -7,15 +7,20 @@ export interface AgentBackendChoice {
   readonly select: (backend: string) => void;
 }
 
-/** 에이전트를 부르는 자리마다 하나씩 두며 자리끼리 값을 나누지 않는다. */
-export function useAgentBackendChoice(): AgentBackendChoice {
+/** 대화마다 자기 선택을 가지므로 대화를 오가도 각자 고른 축이 그대로 보인다. */
+export function useAgentBackendChoice(threadId: string | null): AgentBackendChoice {
   const { data } = agentUpstream.useAgentUpstreamsQuery();
-  const [chosen, setChosen] = useState<string | null>(null);
+  const [chosenByThread, setChosenByThread] = useState<Readonly<Record<string, string>>>({});
+  const chosen = threadId === null ? null : chosenByThread[threadId] ?? null;
+
   return {
     value: agentUpstream.resolveAgentBackend(
       data ?? agentUpstream.EMPTY_AGENT_UPSTREAM_CATALOG,
       chosen,
     ),
-    select: setChosen,
+    select: (backend) => {
+      if (threadId === null) return;
+      setChosenByThread((current) => ({ ...current, [threadId]: backend }));
+    },
   };
 }

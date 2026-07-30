@@ -22,7 +22,7 @@ export function ChatPage() {
   const threadsQuery = useChatThreadsQuery();
   const messagesQuery = useChatMessagesQuery(selectedThreadId);
   const turn = useChatTurn(selectedThreadId);
-  const backend = useAgentBackendChoice();
+  const backend = useAgentBackendChoice(selectedThreadId);
 
   const openThread = (threadId: ChatThreadId) => {
     void navigate(`/chat/${threadId}`);
