@@ -43,7 +43,6 @@ const value: VariantInput = {
   name: "candidate",
   agentName: "task-cleanup",
   backend: "claude-sdk",
-  model: "model",
   promptVersionId: "",
   toolContractVersion: "tools/v1",
   baseline: false,
@@ -90,6 +89,13 @@ describe("VariantForm fragment selectors", () => {
     renderForm(value, onChange);
     fireEvent.change(screen.getByRole("combobox", { name: "Backend" }), { target: { value: "python" } });
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ backend: "python" }));
+  });
+  it("코드가 소유한 조각과 원장이 소유한 프롬프트 정의를 이름으로 나눈다", () => {
+    renderForm();
+    const control = screen.getByRole("combobox", { name: "Stored prompt definition" });
+    expect([...control.querySelectorAll("option")].map((option) => option.textContent)).toEqual([
+      "Code-owned fragments",
+    ]);
   });
   it("다른 백엔드의 fragment를 표시하지 않는다", () => {
     render(

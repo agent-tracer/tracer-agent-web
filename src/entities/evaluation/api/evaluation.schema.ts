@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { DatasetDetail, EvaluationDataset, ExperimentDetail, ExperimentPreview, Experiment, PromptDefinition, PromptVersion, PromptFragmentBinding, ExecutionExampleCandidate, RegisterCandidateFragmentVersionResult } from "../model/evaluation.js";
+import type { DatasetDetail, EvaluationDataset, ExperimentDetail, ExperimentPreview, Experiment, HumanReview, PromptDefinition, PromptVersion, PromptFragmentBinding, ExecutionExampleCandidate, RegisterCandidateFragmentVersionResult, ReviewPair } from "../model/evaluation.js";
 import { backend, iso, parse, record, status } from "./evaluation.primitives.schema.js";
 
 export { parseComparison, parseExecutions } from "./evaluation.result.schema.js";
@@ -69,14 +69,26 @@ const variant = z
   .object({
     id: z.string(),
     name: z.string(),
-    agentName: z.string(),
+    baseline: z.boolean(),
     backend,
-    model: z.string(),
+    agentName: z.string(),
     promptVersionId: z.string().nullable(),
     toolContractVersion: z.string(),
     limits: record,
-    fragmentSelections: z.record(z.string()).optional(),
-    baseline: z.boolean(),
+    fragmentSelections: z.record(z.string()),
+  })
+  .passthrough();
+const review = z
+  .object({
+    id: z.string(),
+    experimentId: z.string(),
+    reviewerUserId: z.string(),
+    executionAId: z.string(),
+    executionBId: z.string(),
+    preference: z.enum(["a", "b", "tie"]),
+    reason: z.string().nullable(),
+    correctedOutput: record.nullable(),
+    createdAt: iso,
   })
   .passthrough();
 const experiment = z
@@ -87,7 +99,6 @@ const experiment = z
     evaluatorSetVersion: z.string(),
     status,
     maxBudgetUsd: z.number(),
-    spentUsd: z.number(),
     repetitions: z.number().int().positive(),
     createdAt: iso,
     completedAt: iso.nullable(),
@@ -159,7 +170,7 @@ export const parseRegisteredCandidateFragmentVersion = (
   );
 export const parseExperiments = (value: unknown): readonly Experiment[] =>
   parse<readonly Experiment[]>(
-    z.object({ experiments: z.array(experiment), nextCursor: z.string().nullable() }).transform((row) => row.experiments),
+    z.object({ experiments: z.array(experiment) }).transform((row) => row.experiments),
     value,
     "experiments",
   );
@@ -172,26 +183,32 @@ export const parseExperimentDetail = (value: unknown): ExperimentDetail =>
 export const parseExperimentPreview = (value: unknown): ExperimentPreview =>
   parse<ExperimentPreview>(
     z.object({
-      experimentId: z.string(),
-      datasetRevision: z.number().int().positive(),
-      variantCount: z.number().int(),
       exampleCount: z.number().int(),
+      variantCount: z.number().int(),
       repetitions: z.number().int(),
-      logicalExecutionCount: z.number().int(),
-      maximumBudgetUsd: z.number(),
-      estimatedCostUsd: z.number().nullable(),
-      estimation: z.object({
-        status: z.enum(["available", "unavailable"]),
-        reason: z.string().nullable(),
-      }),
-      disclosure: z.object({
-        synthetic: z.number().int(),
-        "approved-evaluation": z.number().int(),
-        "production-masked": z.number().int(),
-        "external-disabled": z.number().int(),
-      }),
-      externallyExportable: z.boolean(),
+      executionCount: z.number().int(),
+      maxBudgetUsd: z.number(),
+      fingerprint: z.string().min(1),
     }),
     value,
     "experiment preview",
+  );
+export const parseReviewPair = (value: unknown): ReviewPair | null =>
+  parse<ReviewPair | null>(
+    z
+      .object({
+        executionA: z.object({ id: z.string(), output: record.nullable() }),
+        executionB: z.object({ id: z.string(), output: record.nullable() }),
+        exampleId: z.string(),
+        repetition: z.number().int(),
+      })
+      .nullable(),
+    value,
+    "review pair",
+  );
+export const parseReviews = (value: unknown): readonly HumanReview[] =>
+  parse<readonly HumanReview[]>(
+    z.object({ reviews: z.array(review) }).transform((row) => row.reviews),
+    value,
+    "reviews",
   );

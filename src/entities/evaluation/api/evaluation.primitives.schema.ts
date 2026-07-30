@@ -4,14 +4,7 @@ export const record = z.record(z.unknown());
 export const iso = z.string().min(1);
 /** 상류의 이름은 배포 선언이 정하므로 화면은 후보를 열거하지 않는다. */
 export const backend = z.string().min(1);
-export const status = z.enum([
-  "draft",
-  "queued",
-  "running",
-  "completed",
-  "failed",
-  "cancelled",
-]);
+export const status = z.enum(["draft", "running", "completed", "failed", "cancelled"]);
 
 /** 서버 응답이 계약과 다르면 화면이 부분 렌더링으로 흘러가지 않도록 그 자리에서 던진다. */
 export function parse<T>(

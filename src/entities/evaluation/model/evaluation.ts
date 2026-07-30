@@ -6,15 +6,9 @@ export type DisclosureClass =
 /** 조각을 올린 상류의 이름이며 배포의 상류 선언이 그 값을 정한다. */
 export type PromptBackend = string;
 export type ExperimentStatus =
-  "draft" | "queued" | "running" | "completed" | "failed" | "cancelled";
+  "draft" | "running" | "completed" | "failed" | "cancelled";
 export type ExecutionStatus =
-  | "pending"
-  | "running"
-  | "succeeded"
-  | "not_evaluable"
-  | "budget_skipped"
-  | "failed"
-  | "cancelled";
+  "pending" | "running" | "succeeded" | "failed" | "cancelled";
 
 export interface EvaluationDataset {
   readonly id: string;
@@ -80,13 +74,13 @@ export interface PromptFragmentBinding {
 export interface ExperimentVariant {
   readonly id: string;
   readonly name: string;
+  readonly baseline: boolean;
   readonly backend: PromptBackend;
-  readonly model: string;
+  readonly agentName: string;
   readonly promptVersionId: string | null;
   readonly toolContractVersion: string;
   readonly limits: Record<string, unknown>;
-  readonly baseline: boolean;
-  readonly fragmentSelections?: Readonly<Record<string, string>>;
+  readonly fragmentSelections: Readonly<Record<string, string>>;
 }
 export interface Experiment {
   readonly id: string;
@@ -95,7 +89,6 @@ export interface Experiment {
   readonly evaluatorSetVersion: string;
   readonly status: ExperimentStatus;
   readonly maxBudgetUsd: number;
-  readonly spentUsd: number;
   readonly repetitions: number;
   readonly createdAt: string;
   readonly completedAt: string | null;
@@ -105,42 +98,38 @@ export interface ExperimentDetail {
   readonly variants: readonly ExperimentVariant[];
 }
 export interface ExperimentPreview {
-  readonly experimentId: string;
-  readonly datasetRevision: number;
-  readonly variantCount: number;
   readonly exampleCount: number;
+  readonly variantCount: number;
   readonly repetitions: number;
-  readonly logicalExecutionCount: number;
-  readonly maximumBudgetUsd: number;
-  readonly estimatedCostUsd: number | null;
-  readonly estimation: {
-    readonly status: "available" | "unavailable";
-    readonly reason: string | null;
-  };
-  readonly disclosure: Readonly<Record<DisclosureClass, number>>;
-  readonly externallyExportable: boolean;
+  readonly executionCount: number;
+  readonly maxBudgetUsd: number;
+  readonly fingerprint: string;
+}
+/** 초안을 본 화면이 그대로 시작해도 되는지를 서버가 대조하는 값이다. */
+export interface ExperimentStartConfirmation {
+  readonly executionCount: number;
+  readonly maxBudgetUsd: number;
+  readonly fingerprint: string;
 }
 export interface EvaluationScore {
   readonly id: string;
+  readonly executionId: string;
   readonly evaluatorId: string;
   readonly evaluatorVersion: string;
-  readonly score: number | null;
+  readonly score: number;
   readonly label: string | null;
   readonly reason: string | null;
 }
 export interface ExperimentExecution {
   readonly id: string;
+  readonly experimentId: string;
   readonly variantId: string;
   readonly exampleId: string;
   readonly repetition: number;
   readonly status: ExecutionStatus;
-  readonly attemptCount: number;
-  readonly costUsd: number;
-  readonly durationMs: number | null;
-  readonly traceId: string | null;
   readonly output: Record<string, unknown> | null;
-  /** 워커가 산출해 실행 행에 기록만 하는 해시이며 대조에는 쓰이지 않는다. */
-  readonly resolvedPromptHash: string | null;
+  readonly error: string | null;
+  readonly costUsd: number;
 }
 export interface ExecutionWithScores {
   readonly execution: ExperimentExecution;
@@ -149,27 +138,14 @@ export interface ExecutionWithScores {
 export interface VariantComparison {
   readonly variantId: string;
   readonly name: string;
-  readonly baseline: boolean;
-  readonly sampleSize: number;
-  readonly executionCount: number;
-  readonly successRate: number;
-  readonly validationPassRate: number | null;
-  readonly emptyRate: number | null;
-  readonly repairRate: number | null;
-  readonly preferenceRate: number | null;
+  readonly succeeded: number;
   readonly meanScore: number | null;
-  readonly meanCostUsd: number;
-  readonly p95CostUsd: number;
-  readonly meanLatencyMs: number | null;
-  readonly p95LatencyMs: number | null;
-  readonly scoreDeltaFromBaseline: number | null;
-  readonly successRateDeltaFromBaseline: number | null;
+  readonly totalCostUsd: number;
 }
 export interface ExperimentComparison {
   readonly experimentId: string;
   readonly status: ExperimentStatus;
   readonly variants: readonly VariantComparison[];
-  readonly warnings: readonly string[];
 }
 
 export interface ExampleInput {
@@ -191,23 +167,40 @@ export interface ExecutionExampleCandidate {
 }
 export interface VariantInput {
   readonly name: string;
+  readonly baseline: boolean;
   readonly agentName: string;
   readonly backend: PromptBackend;
-  readonly model: string;
   readonly promptVersionId: string;
   readonly toolContractVersion: string;
   readonly limits?: Record<string, unknown>;
-  readonly baseline: boolean;
   readonly fragmentSelections?: Readonly<Record<string, string>>;
 }
 
-export type ReviewPreference = "a" | "b" | "tie" | "reject";
+export type ReviewPreference = "a" | "b" | "tie";
 export interface ReviewSubmission {
   readonly executionAId: string;
   readonly executionBId: string;
   readonly preference: ReviewPreference;
   readonly reason: string | null;
   readonly correctedOutput: Record<string, unknown> | null;
+}
+export interface HumanReview {
+  readonly id: string;
+  readonly experimentId: string;
+  readonly reviewerUserId: string;
+  readonly executionAId: string;
+  readonly executionBId: string;
+  readonly preference: ReviewPreference;
+  readonly reason: string | null;
+  readonly correctedOutput: Record<string, unknown> | null;
+  readonly createdAt: string;
+}
+/** 아직 판정하지 않은 두 실행이며 뽑을 짝이 없으면 서버가 비운다. */
+export interface ReviewPair {
+  readonly executionA: { readonly id: string; readonly output: Record<string, unknown> | null };
+  readonly executionB: { readonly id: string; readonly output: Record<string, unknown> | null };
+  readonly exampleId: string;
+  readonly repetition: number;
 }
 export interface DatasetExportManifest {
   readonly contentHash: string;

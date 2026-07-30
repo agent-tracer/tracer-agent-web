@@ -1,6 +1,6 @@
 import { getJson, patchJson, postJson, deleteRequest } from "tracerWeb/api";
-import type { DatasetExportResult, ExampleInput, PromptBackend, RegisterCandidateFragmentVersionInput, ReviewSubmission, VariantInput } from "../model/evaluation.js";
-import { parseComparison, parseCreatedPrompt, parseDatasetDetail, parseDatasets, parseExecutions, parseExperimentDetail, parseExperimentPreview, parseExperiments, parsePrompts, parsePromptVersion, parsePromptVersions, parsePromptFragments, parseExecutionExampleCandidate, parseRegisteredCandidateFragmentVersion } from "./evaluation.schema.js";
+import type { DatasetExportResult, ExampleInput, ExperimentStartConfirmation, PromptBackend, RegisterCandidateFragmentVersionInput, ReviewSubmission, VariantInput } from "../model/evaluation.js";
+import { parseComparison, parseCreatedPrompt, parseDatasetDetail, parseDatasets, parseExecutions, parseExperimentDetail, parseExperimentPreview, parseExperiments, parsePrompts, parsePromptVersion, parsePromptVersions, parsePromptFragments, parseExecutionExampleCandidate, parseRegisteredCandidateFragmentVersion, parseReviewPair, parseReviews } from "./evaluation.schema.js";
 
 // 평가는 에이전트 서비스가 소유하므로 게이트웨이의 에이전트 접두사 아래로 부른다.
 const EVALUATION = "/api/agent/evaluation";
@@ -131,11 +131,7 @@ export async function fetchComparison(id: string) {
 }
 export async function startExperiment(
   id: string,
-  confirmation: {
-    datasetRevision: number;
-    logicalExecutionCount: number;
-    maximumBudgetUsd: number;
-  },
+  confirmation: ExperimentStartConfirmation,
 ) {
   return postJson<unknown>(`${EXPERIMENTS}/${encodeURIComponent(id)}/start`, {
     confirmation,
@@ -156,12 +152,15 @@ export async function exportDataset(id: string, format: string, experimentId?: s
   });
 }
 
-export async function listReviews() {
-  return getJson<unknown[]>(`${EVALUATION}/reviews`);
+function reviews(experimentId: string) {
+  return `${EXPERIMENTS}/${encodeURIComponent(experimentId)}/reviews`;
 }
-export async function createReview(input: { experimentId: string }) {
-  return postJson<unknown>(`${EXPERIMENTS}/${encodeURIComponent(input.experimentId)}/reviews`);
+export async function fetchReviews(experimentId: string) {
+  return parseReviews(await getJson<unknown>(reviews(experimentId)));
+}
+export async function drawReviewPair(experimentId: string) {
+  return parseReviewPair(await postJson<unknown>(`${reviews(experimentId)}/next`));
 }
 export async function submitReview(experimentId: string, input: ReviewSubmission) {
-  return postJson<unknown>(`${EXPERIMENTS}/${encodeURIComponent(experimentId)}/reviews/submit`, input);
+  return postJson<unknown>(reviews(experimentId), input);
 }

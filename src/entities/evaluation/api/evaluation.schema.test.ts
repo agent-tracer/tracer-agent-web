@@ -1,35 +1,63 @@
 import { describe, expect, it } from "vitest";
-import { parseCreatedPrompt, parseExecutions, parseExperimentPreview, parseExperimentDetail, parsePromptFragments } from "./evaluation.schema.js";
+import { parseCreatedPrompt, parseExecutions, parseExperimentPreview, parseExperimentDetail, parsePromptFragments, parseReviewPair } from "./evaluation.schema.js";
 
 describe("evaluation response schemas", () => {
-  it("실패가 아닌 워크플로 종료 상태를 파싱한다", () => {
+  it("원장이 아는 실행 종료 상태를 파싱한다", () => {
     const rows = parseExecutions({
-      executions: ["not_evaluable", "budget_skipped"].map((status, index) => ({
+      executions: ["succeeded", "failed", "cancelled"].map((status, index) => ({
         execution: {
           id: `e${index}`,
+          experimentId: "e",
           variantId: "v",
           exampleId: "x",
           repetition: 1,
           status,
-          attemptCount: 1,
-          costUsd: 0,
-          durationMs: null,
-          traceId: null,
           output: null,
+          error: null,
+          costUsd: 0,
         },
         scores: [],
       })),
     });
     expect(rows.map((row) => row.execution.status)).toEqual([
-      "not_evaluable",
-      "budget_skipped",
+      "succeeded",
+      "failed",
+      "cancelled",
     ]);
+  });
+
+  it("실행마다 딸린 점수를 함께 파싱한다", () => {
+    const rows = parseExecutions({
+      executions: [{
+        execution: {
+          id: "e0", experimentId: "e", variantId: "v", exampleId: "x", repetition: 1,
+          status: "succeeded", output: { answer: "값" }, error: null, costUsd: 0.01,
+        },
+        scores: [{
+          id: "s0", executionId: "e0", evaluatorId: "judge", evaluatorVersion: "1",
+          score: 0.5, label: null, reason: null,
+        }],
+      }],
+    });
+    expect(rows[0]?.scores[0]?.score).toBe(0.5);
   });
 
   it("형태가 잘못된 중첩 API 응답을 거부한다", () => {
     expect(() =>
-      parseExperimentPreview({ experimentId: "e", datasetRevision: "1" }),
+      parseExperimentPreview({ exampleCount: 1, executionCount: "1" }),
     ).toThrow("Invalid experiment preview response");
+  });
+
+  it("실험을 시작할 때 대조할 지문을 예고에서 읽는다", () => {
+    const preview = parseExperimentPreview({
+      exampleCount: 3, variantCount: 2, repetitions: 1,
+      executionCount: 6, maxBudgetUsd: 1, fingerprint: "e:1:x:v",
+    });
+    expect(preview.fingerprint).toBe("e:1:x:v");
+  });
+
+  it("아직 판정할 짝이 없으면 비운 검토 응답을 파싱한다", () => {
+    expect(parseReviewPair(null)).toBeNull();
   });
 
   it("프롬프트 정의와 최초 버전을 함께 검증한다", () => {
@@ -122,16 +150,16 @@ describe("evaluation response schemas", () => {
     ).toThrow("Invalid created prompt response");
   });
 
-  it("fragment variant의 null legacy prompt와 selection을 round-trip한다", () => {
+  it("원장이 소유한 프롬프트 판을 비운 변형과 그 조각 선택을 함께 파싱한다", () => {
     const detail = parseExperimentDetail({
       experiment: {
         id: "e", datasetId: "d", datasetRevision: 1, evaluatorSetVersion: "default-v1",
-        status: "draft", maxBudgetUsd: 1, spentUsd: 0, repetitions: 1,
+        status: "draft", maxBudgetUsd: 1, repetitions: 1,
         createdAt: "2026-01-01", completedAt: null,
       },
       variants: [{
-        id: "v", name: "candidate", agentName: "task-cleanup", backend: "claude-sdk", model: "m",
-        promptVersionId: null, toolContractVersion: "1", limits: {}, baseline: false,
+        id: "v", name: "candidate", baseline: false, agentName: "task-cleanup", backend: "claude-sdk",
+        promptVersionId: null, toolContractVersion: "1", limits: {},
         fragmentSelections: { "sdk.task-cleanup.investigator.system/suggestionRules": "version-v2" },
       }],
     });

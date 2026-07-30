@@ -8,14 +8,13 @@ import { readRecentExperiments } from "../lib/recent-experiments.js";
 import { ExperimentRun } from "./ExperimentRun.js";
 import { Field, VariantForm } from "./VariantForm.js";
 
-/** 초안의 두 변형은 배포가 첫째로 선언한 상류에서 출발한다. */
-function draftVariants(backend: string): readonly VariantInput[] {
+/** 초안의 두 변형은 배포가 첫째로 선언한 상류와 원장이 첫째로 아는 에이전트에서 출발한다. */
+function draftVariants(backend: string, agentName: string): readonly VariantInput[] {
   const shared = {
-    agentName: "title-suggestion",
+    agentName,
     backend,
-    model: "default",
     promptVersionId: "",
-    toolContractVersion: "1",
+    toolContractVersion: "",
     limits: { maxCostUsd: 0.1 },
   };
   return [
@@ -37,13 +36,18 @@ export function ExperimentEditor() {
   const workspace = useExperimentWorkspaceQuery(experimentId);
   const [datasetId, setDatasetId] = useState("");
   const selectedDataset = datasets.data?.find((row) => row.id === datasetId);
-  const [evaluatorSetVersion, setEvaluator] = useState("default-v1");
+  const [evaluatorSetVersion, setEvaluator] = useState("");
   const [budget, setBudget] = useState("1");
   const [repetitions, setRepetitions] = useState("1");
   const [error, setError] = useState<string | null>(null);
   const upstreams = agentUpstream.useAgentUpstreamsQuery();
   const [edited, setVariants] = useState<readonly VariantInput[] | null>(null);
-  const variants = edited ?? draftVariants(upstreams.data?.upstreams[0]?.name ?? "");
+  const variants =
+    edited ??
+    draftVariants(
+      upstreams.data?.upstreams[0]?.name ?? "",
+      prompts.data?.[0]?.agentName ?? "",
+    );
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!selectedDataset) return;
@@ -78,19 +82,9 @@ export function ExperimentEditor() {
   const detail = workspace.detail.data;
   const executions = workspace.executions.data ?? [];
   const done = executions.filter((row) =>
-    [
-      "succeeded",
-      "not_evaluable",
-      "budget_skipped",
-      "failed",
-      "cancelled",
-    ].includes(row.execution.status),
+    ["succeeded", "failed", "cancelled"].includes(row.execution.status),
   ).length;
-  const failed = executions.filter(
-    (row) =>
-      row.execution.status === "failed" ||
-      row.execution.status === "not_evaluable",
-  );
+  const failed = executions.filter((row) => row.execution.status === "failed");
   const percent =
     executions.length === 0 ? 0 : Math.round((done / executions.length) * 100);
   const start = () => {
@@ -99,9 +93,9 @@ export function ExperimentEditor() {
       {
         id: experimentId,
         confirmation: {
-          datasetRevision: preview.datasetRevision,
-          logicalExecutionCount: preview.logicalExecutionCount,
-          maximumBudgetUsd: preview.maximumBudgetUsd,
+          executionCount: preview.executionCount,
+          maxBudgetUsd: preview.maxBudgetUsd,
+          fingerprint: preview.fingerprint,
         },
       },
       { onError: (e) => setError(errorMessage(e)) },

@@ -1,14 +1,7 @@
 import { useState, useEffect } from "react";
 import { useExperimentsQuery } from "~/entities/evaluation/api/queries.js";
-import { createReview, submitReview } from "~/entities/evaluation/api/api-evaluation.js";
-import type { ReviewPreference } from "~/entities/evaluation/model/evaluation.js";
-
-interface ReviewPair {
-  executionA: { id: string; output: unknown };
-  executionB: { id: string; output: unknown };
-  exampleId: string;
-  repetition: number;
-}
+import { drawReviewPair, submitReview } from "~/entities/evaluation/api/api-evaluation.js";
+import type { ReviewPair, ReviewPreference } from "~/entities/evaluation/model/evaluation.js";
 
 export function ReviewEditor() {
     const experiments = useExperimentsQuery();
@@ -19,8 +12,7 @@ export function ReviewEditor() {
     const loadNext = async (forExperimentId: string) => {
         setLoading(true);
         try {
-            const data = await createReview({ experimentId: forExperimentId });
-            setPair(data as ReviewPair);
+            setPair(await drawReviewPair(forExperimentId));
         } catch {
             setPair(null);
         } finally {
@@ -95,7 +87,6 @@ export function ReviewEditor() {
                                 </div>
                                 <div className="mt-4 flex gap-2">
                                     <button onClick={() => void handleSelect('tie')} className="border border-hair text-ink text-xs px-3 py-1 rounded-xs hover:bg-s1 transition-colors">Tie</button>
-                                    <button onClick={() => void handleSelect('reject')} className="border border-danger text-danger bg-s2 text-xs px-3 py-1 rounded-xs hover:bg-s2/80 transition-colors">Reject Both</button>
                                 </div>
                             </>
                         ) : (

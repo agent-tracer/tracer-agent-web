@@ -5,9 +5,10 @@ import { parse, record, status } from "./evaluation.primitives.schema.js";
 const score = z
   .object({
     id: z.string(),
+    executionId: z.string(),
     evaluatorId: z.string(),
     evaluatorVersion: z.string(),
-    score: z.number().nullable(),
+    score: z.number(),
     label: z.string().nullable(),
     reason: z.string().nullable(),
   })
@@ -16,24 +17,14 @@ const score = z
 const execution = z
   .object({
     id: z.string(),
+    experimentId: z.string(),
     variantId: z.string(),
     exampleId: z.string(),
     repetition: z.number().int(),
-    status: z.enum([
-      "pending",
-      "running",
-      "succeeded",
-      "not_evaluable",
-      "budget_skipped",
-      "failed",
-      "cancelled",
-    ]),
-    attemptCount: z.number().int(),
-    costUsd: z.number(),
-    durationMs: z.number().int().nullable(),
-    traceId: z.string().nullable(),
+    status: z.enum(["pending", "running", "succeeded", "failed", "cancelled"]),
     output: record.nullable(),
-    resolvedPromptHash: z.string().nullable().default(null),
+    error: z.string().nullable(),
+    costUsd: z.number(),
   })
   .passthrough();
 
@@ -50,25 +41,12 @@ export const parseExecutions = (
     "executions",
   );
 
-const nullableMetric = z.number().nullable();
 const comparisonVariant = z.object({
   variantId: z.string(),
   name: z.string(),
-  baseline: z.boolean(),
-  sampleSize: z.number().int(),
-  executionCount: z.number().int(),
-  successRate: z.number(),
-  validationPassRate: nullableMetric,
-  emptyRate: nullableMetric,
-  repairRate: nullableMetric,
-  preferenceRate: nullableMetric,
-  meanScore: nullableMetric,
-  meanCostUsd: z.number(),
-  p95CostUsd: z.number(),
-  meanLatencyMs: nullableMetric,
-  p95LatencyMs: nullableMetric,
-  scoreDeltaFromBaseline: nullableMetric,
-  successRateDeltaFromBaseline: nullableMetric,
+  succeeded: z.number().int(),
+  meanScore: z.number().nullable(),
+  totalCostUsd: z.number(),
 });
 
 export const parseComparison = (value: unknown): ExperimentComparison =>
@@ -77,7 +55,6 @@ export const parseComparison = (value: unknown): ExperimentComparison =>
       experimentId: z.string(),
       status,
       variants: z.array(comparisonVariant),
-      warnings: z.array(z.string()),
     }),
     value,
     "comparison",

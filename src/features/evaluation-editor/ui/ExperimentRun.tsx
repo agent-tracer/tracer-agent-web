@@ -37,8 +37,6 @@ export function ExperimentRun({
     (failurePage - 1) * pageSize,
     failurePage * pageSize,
   );
-  const langsmithBase = import.meta.env.VITE_LANGSMITH_PROJECT_URL as
-    string | undefined;
   return (
     <div className="grid gap-4">
       <div className="rounded-sm border border-hair bg-s1 p-4">
@@ -55,40 +53,20 @@ export function ExperimentRun({
         )}
         {preview && (
           <>
-            <div className="mt-3 grid gap-2 text-xs sm:grid-cols-4">
+            <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
               <Metric
                 label="Matrix"
                 value={`${preview.exampleCount} × ${preview.variantCount} × ${preview.repetitions}`}
               />
-              <Metric
-                label="Executions"
-                value={String(preview.logicalExecutionCount)}
-              />
+              <Metric label="Executions" value={String(preview.executionCount)} />
               <Metric
                 label="Budget"
-                value={`$${preview.maximumBudgetUsd.toFixed(2)}`}
-              />
-              <Metric
-                label="Estimate"
-                value={
-                  preview.estimatedCostUsd === null
-                    ? "Unavailable"
-                    : `$${preview.estimatedCostUsd.toFixed(2)}`
-                }
+                value={`$${preview.maxBudgetUsd.toFixed(2)}`}
               />
             </div>
             <p className="mt-2 text-xs text-ink-muted">
-              Disclosure: synthetic {preview.disclosure.synthetic}, approved{" "}
-              {preview.disclosure["approved-evaluation"]}, masked{" "}
-              {preview.disclosure["production-masked"]}, external-disabled{" "}
-              {preview.disclosure["external-disabled"]}
+              Preview fingerprint <code className="break-all">{preview.fingerprint}</code>
             </p>
-            {!preview.externallyExportable && (
-              <p role="status" className="mt-2 text-xs text-warn">
-                This run may proceed internally, but external-disabled examples
-                must not be exported to LangSmith.
-              </p>
-            )}
           </>
         )}
         <div
@@ -129,7 +107,6 @@ export function ExperimentRun({
       <ComparisonTable
         comparison={comparison}
         comparisonError={comparisonError}
-        executions={executions}
       />
       <div className="rounded-sm border border-hair bg-s1 p-4">
         <h3 className="text-sm font-semibold">Failed executions</h3>
@@ -151,22 +128,16 @@ export function ExperimentRun({
                   </summary>
                   <dl className="mt-2 grid gap-1 text-xs">
                     <div>Example: {row.execution.exampleId}</div>
-                    <div>Attempts: {row.execution.attemptCount}</div>
                     <div>Cost: ${row.execution.costUsd.toFixed(4)}</div>
+                    {row.execution.error && <div>Error: {row.execution.error}</div>}
                     {row.scores.map((score) => (
                       <div key={score.id}>
                         {score.evaluatorId}:{" "}
-                        {score.label ?? score.score ?? "unscored"}{" "}
+                        {score.label ?? score.score}{" "}
                         {score.reason ?? ""}
                       </div>
                     ))}
                   </dl>
-                  {row.execution.traceId && (
-                    <TraceReference
-                      traceId={row.execution.traceId}
-                      langsmithBase={langsmithBase}
-                    />
-                  )}
                 </details>
               ))}
             </div>
@@ -199,44 +170,6 @@ export function ExperimentRun({
           </>
         )}
       </div>
-    </div>
-  );
-}
-function TraceReference({
-  traceId,
-  langsmithBase,
-}: {
-  readonly traceId: string;
-  readonly langsmithBase: string | undefined;
-}) {
-  return (
-    <div className="mt-2 flex flex-wrap gap-3 text-xs">
-      <code>Trace {traceId}</code>
-      <button
-        type="button"
-        onClick={() => void navigator.clipboard.writeText(traceId)}
-        className="text-primary underline"
-      >
-        Copy trace ID
-      </button>
-      {langsmithBase ? (
-        <a
-          href={langsmithBase}
-          target="_blank"
-          rel="noreferrer"
-          className="text-primary underline"
-        >
-          Open LangSmith project
-        </a>
-      ) : (
-        <span className="text-ink-tertiary">
-          Set VITE_LANGSMITH_PROJECT_URL to enable the project link.
-        </span>
-      )}
-      <span className="text-ink-tertiary">
-        Internal trace lookup is unavailable until the server exposes a trace
-        route.
-      </span>
     </div>
   );
 }

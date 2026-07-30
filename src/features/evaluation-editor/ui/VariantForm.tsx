@@ -46,19 +46,31 @@ export function VariantForm({
       <div className="grid gap-2">
         <Field label="Name" value={value.name} set={(name) => onChange({ ...value, name })} />
         <Field label="Agent" value={value.agentName} set={(agentName) => onChange({ ...value, agentName })} />
-        <Field label="Model" value={value.model} set={(model) => onChange({ ...value, model })} />
         <label className="grid gap-1 text-xs">
-          Prompt definition (legacy)
+          Stored prompt definition
           <select value={definitionId} onChange={(event) => { setDefinitionId(event.target.value); onChange({ ...value, promptVersionId: "" }); }} className="rounded-xs border border-hair bg-s1 p-2">
             <option value="">Code-owned fragments</option>
             {promptDefinitions.filter((row) => row.backend === value.backend).map((row) => <option key={row.id} value={row.id}>{row.name} · {row.language}</option>)}
           </select>
         </label>
         {definitionId && (
-          <select aria-label="Legacy prompt version" value={value.promptVersionId} onChange={(event) => onChange({ ...value, promptVersionId: event.target.value })} className="rounded-xs border border-hair bg-s1 p-2">
+          <select
+            aria-label="Stored prompt version"
+            value={value.promptVersionId}
+            onChange={(event) => {
+              const version = versions.data?.find((row) => row.id === event.target.value);
+              onChange({
+                ...value,
+                promptVersionId: event.target.value,
+                toolContractVersion: version?.toolContractVersion ?? value.toolContractVersion,
+              });
+            }}
+            className="rounded-xs border border-hair bg-s1 p-2"
+          >
             {versions.data?.map((row) => <option key={row.id} value={row.id}>{row.semanticVersion} · {row.contentHash.slice(0, 10)}</option>)}
           </select>
         )}
+        <Field label="Tool contract" value={value.toolContractVersion} set={(toolContractVersion) => onChange({ ...value, toolContractVersion })} />
         <label className="grid gap-1 text-xs">
           Backend
           <select
