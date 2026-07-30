@@ -3,7 +3,7 @@ import { deleteRequest, getJson, patchJson, postJson } from "tracerWeb/api";
 import { toChatMessageRecord, toChatThreadRecord, type ChatMessageWireDto, type ChatThreadWireDto } from "~/entities/chat/api/chat.mapper.js";
 
 /** 대화 스레드 창구의 경로이며 계약이 이 아래에 접수와 취소를 연다. */
-export const CHAT_THREADS_PATH = "/api/v1/chat/threads";
+export const CHAT_THREADS_PATH = "/api/agent/chat/threads";
 
 export async function fetchChatThreads(): Promise<ChatThreadsListResponse> {
   const res = await getJson<{ readonly items: readonly ChatThreadWireDto[] }>(

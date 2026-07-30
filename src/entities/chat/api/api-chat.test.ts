@@ -36,7 +36,7 @@ describe("renameChatThread", () => {
 
     const response = await renameChatThread(ChatThreadId("thread-1"), "새 제목");
 
-    expect(mockPatchJson).toHaveBeenCalledWith("/api/v1/chat/threads/thread-1", {
+    expect(mockPatchJson).toHaveBeenCalledWith("/api/agent/chat/threads/thread-1", {
       title: "새 제목",
     });
     expect(response.thread.title).toBe("새 제목");
@@ -61,7 +61,7 @@ describe("fetchChatThreads", () => {
 
     const response = await fetchChatThreads();
 
-    expect(mockGetJson).toHaveBeenCalledWith("/api/v1/chat/threads");
+    expect(mockGetJson).toHaveBeenCalledWith("/api/agent/chat/threads");
     expect(response.threads[0]).toMatchObject({
       id: "thread-1",
       title: "First thread",
@@ -88,7 +88,7 @@ describe("fetchChatMessages", () => {
     const response = await fetchChatMessages(ChatThreadId("thread-1"));
 
     expect(mockGetJson).toHaveBeenCalledWith(
-      "/api/v1/chat/threads/thread-1/messages",
+      "/api/agent/chat/threads/thread-1/messages",
     );
     expect(response.messages.map((m) => m.content)).toEqual(["hi"]);
   });
@@ -110,7 +110,7 @@ describe("createChatThread", () => {
 
     const response = await createChatThread({ title: "New thread" });
 
-    expect(mockPostJson).toHaveBeenCalledWith("/api/v1/chat/threads", {
+    expect(mockPostJson).toHaveBeenCalledWith("/api/agent/chat/threads", {
       title: "New thread",
     });
     expect(response.thread.id).toBe("thread-2");
@@ -133,7 +133,7 @@ describe("confirmChatTool", () => {
     });
 
     expect(mockPostJson).toHaveBeenCalledWith(
-      "/api/v1/chat/threads/thread-1/confirmations/confirm-1",
+      "/api/agent/chat/threads/thread-1/confirmations/confirm-1",
       { decision: "approve" },
     );
     expect(response.status).toBe("approved");
@@ -177,7 +177,7 @@ describe("durable chat execution API", () => {
     });
 
     expect(mockPostJson).toHaveBeenCalledWith(
-      "/api/v1/chat/threads/thread-1/messages",
+      "/api/agent/chat/threads/thread-1/messages",
       {
         clientRequestId: "request-1",
         content: "hello",
@@ -214,7 +214,7 @@ describe("durable chat execution API", () => {
       },
     ]);
     expect(mockPostJson).toHaveBeenCalledWith(
-      "/api/v1/chat/threads/thread-1/executions/execution-1/cancel",
+      "/api/agent/chat/threads/thread-1/executions/execution-1/cancel",
     );
   });
 });
