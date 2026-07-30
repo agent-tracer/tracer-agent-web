@@ -2,10 +2,11 @@ import { getJson, patchJson, postJson, deleteRequest } from "tracerWeb/api";
 import type { DatasetExportResult, ExampleInput, RegisterCandidateFragmentVersionInput, ReviewSubmission, VariantInput } from "../model/evaluation.js";
 import { parseComparison, parseCreatedPrompt, parseDatasetDetail, parseDatasets, parseExecutions, parseExperimentDetail, parseExperimentPreview, parseExperiments, parsePrompts, parsePromptVersion, parsePromptVersions, parsePromptFragments, parseExecutionExampleCandidate, parseRegisteredCandidateFragmentVersion } from "./evaluation.schema.js";
 
-const EVALUATION = "/api/v1/evaluation";
-const EXPERIMENTS = "/api/v1/experiments";
-const PROMPTS = "/api/v1/prompts";
-const PROMPT_FRAGMENTS = "/api/v1/prompt-fragments";
+// 평가는 에이전트 서비스가 소유하므로 게이트웨이의 에이전트 접두사 아래로 부른다.
+const EVALUATION = "/api/agent/evaluation";
+const EXPERIMENTS = `${EVALUATION}/experiments`;
+const PROMPTS = `${EVALUATION}/prompts`;
+const PROMPT_FRAGMENTS = `${EVALUATION}/prompt-fragments`;
 export async function fetchDatasets() {
   return parseDatasets(await getJson<unknown>(`${EVALUATION}/datasets`));
 }
@@ -56,7 +57,7 @@ export async function registerCandidateFragmentVersion(
   input: RegisterCandidateFragmentVersionInput,
 ) {
   return parseRegisteredCandidateFragmentVersion(
-    await postJson<unknown>(`${PROMPT_FRAGMENTS}/candidates`, input),
+    await postJson<unknown>(`${PROMPT_FRAGMENTS}/candidate`, input),
   );
 }
 export async function fetchExperiments() {
