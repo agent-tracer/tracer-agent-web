@@ -94,6 +94,8 @@ declare module "tracerWeb/store" {
 declare module "tracerWeb/api" {
   export interface RequestOptions {
     readonly signal?: AbortSignal;
+    /** 이 요청만 보낼 상류이며 지목하지 않으면 선언의 첫 상류로 간다. */
+    readonly backend?: string;
   }
 
   export function getJson<T>(pathname: string, options?: RequestOptions): Promise<T>;
@@ -164,6 +166,8 @@ declare module "tracerWeb/ui" {
   ): ReactNode;
 
   export function Input(props: ComponentPropsWithoutRef<"input">): ReactNode;
+
+  export function Select(props: ComponentPropsWithoutRef<"select">): ReactNode;
 
   export function Card(props: {
     readonly title?: string;
@@ -345,6 +349,25 @@ declare module "tracerWeb/entities" {
     function useJobQuery(jobId: string | null): UseQueryResult<{ readonly job: JobDto }>;
     function useJobStepsQuery(jobId: string | null): UseQueryResult<AiJobStepList>;
     function useCancelJobMutation(): UseMutationResult<JobDto, Error, Pick<JobDto, "id">>;
+  }
+
+  export namespace agentUpstream {
+    interface AgentUpstream {
+      readonly name: string;
+    }
+
+    interface AgentUpstreamCatalog {
+      readonly upstreams: readonly AgentUpstream[];
+    }
+
+    const EMPTY_AGENT_UPSTREAM_CATALOG: AgentUpstreamCatalog;
+
+    function requiresAgentBackendChoice(catalog: AgentUpstreamCatalog): boolean;
+    function resolveAgentBackend(
+      catalog: AgentUpstreamCatalog,
+      selected: string | null,
+    ): string | null;
+    function useAgentUpstreamsQuery(): UseQueryResult<AgentUpstreamCatalog>;
   }
 
   export namespace task {

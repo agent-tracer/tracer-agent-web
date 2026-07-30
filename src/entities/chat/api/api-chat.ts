@@ -47,6 +47,7 @@ export interface StartChatTurnResponse {
 export async function startChatTurn(
   threadId: ChatThreadId,
   input: StartChatTurnInput,
+  backend?: string | null,
 ): Promise<StartChatTurnResponse> {
   const res = await postJson<{
     readonly message: ChatMessageWireDto;
@@ -54,6 +55,7 @@ export async function startChatTurn(
   }>(
     `${CHAT_THREADS_PATH}/${threadId}/messages`,
     input,
+    backend ? { backend } : undefined,
   );
   return {
     message: toChatMessageRecord(res.message),

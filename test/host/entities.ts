@@ -27,6 +27,23 @@ export const job = {
   useCancelJobMutation: () => unstubbed("useCancelJobMutation"),
 } as const;
 
+export const agentUpstream = {
+  EMPTY_AGENT_UPSTREAM_CATALOG: { upstreams: [] },
+  requiresAgentBackendChoice: (catalog: { upstreams: readonly unknown[] }) =>
+    catalog.upstreams.length > 1,
+  resolveAgentBackend: (
+    catalog: { upstreams: readonly { name: string }[] },
+    selected: string | null,
+  ) => {
+    if (catalog.upstreams.length <= 1) return null;
+    if (selected !== null && catalog.upstreams.some((upstream) => upstream.name === selected)) {
+      return selected;
+    }
+    return catalog.upstreams[0]?.name ?? null;
+  },
+  useAgentUpstreamsQuery: () => unstubbed("useAgentUpstreamsQuery"),
+} as const;
+
 export const task = {
   useUpdateTaskMutation: () => unstubbed("useUpdateTaskMutation"),
 } as const;

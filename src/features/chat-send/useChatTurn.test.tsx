@@ -104,6 +104,28 @@ describe("useChatTurn", () => {
     expect(result.current.isStreaming).toBe(true);
   });
 
+  it("대화 자리가 고른 상류로 턴을 접수하고 재시도도 같은 상류로 보낸다", async () => {
+    startChatTurnMock.mockRejectedValue(new Error("network unavailable"));
+    const { result } = renderHook(() => useChatTurn(ChatThreadId("thread-1")), {
+      wrapper,
+    });
+
+    act(() => result.current.sendMessage("hello", "python"));
+
+    await waitFor(() => expect(result.current.error).toBe("network unavailable"));
+    expect(startChatTurnMock).toHaveBeenCalledWith(
+      ChatThreadId("thread-1"),
+      expect.objectContaining({ content: "hello" }),
+      "python",
+    );
+
+    const [pending] = result.current.pendingMessages;
+    act(() => result.current.retryMessage(pending?.clientRequestId ?? ""));
+
+    await waitFor(() => expect(startChatTurnMock).toHaveBeenCalledTimes(2));
+    expect(startChatTurnMock.mock.calls[1]?.[2]).toBe("python");
+  });
+
   it("접수된 사용자 메시지와 실행을 캐시에 중복 없이 합친다", async () => {
     startChatTurnMock.mockResolvedValue({
       message,

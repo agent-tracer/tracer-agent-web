@@ -12,6 +12,7 @@ interface PendingMessage {
   readonly threadId: ChatThreadId;
   readonly clientRequestId: string;
   readonly content: string;
+  readonly backend: string | null;
   readonly status: "sending" | "accepted" | "failed";
   readonly error?: string;
   readonly acceptedMessage?: ChatMessageRecord;
@@ -32,7 +33,7 @@ export interface UseChatTurnResult {
   readonly pendingConfirms: readonly ChatConfirmRequest[];
   readonly error: string | null;
   readonly queuedCount: number;
-  readonly sendMessage: (content: string) => void;
+  readonly sendMessage: (content: string, backend?: string | null) => void;
   readonly stop: () => void;
   readonly retryMessage: (clientRequestId: string) => void;
   readonly dismissMessage: (clientRequestId: string) => void;
@@ -110,10 +111,11 @@ export function useChatTurn(threadId: ChatThreadId | null): UseChatTurnResult {
   const submitPending = useCallback(
     (pending: PendingMessage) => {
       if (!threadId) return;
-      void startChatTurn(threadId, {
-        clientRequestId: pending.clientRequestId,
-        content: pending.content,
-      })
+      void startChatTurn(
+        threadId,
+        { clientRequestId: pending.clientRequestId, content: pending.content },
+        pending.backend,
+      )
         .then(async ({ message, execution }) => {
           queryClient.setQueryData<ChatExecutionsListResponse>(
             monitorQueryKeys.chatExecutions(threadId),
@@ -159,12 +161,15 @@ export function useChatTurn(threadId: ChatThreadId | null): UseChatTurnResult {
   );
 
   const sendMessage = useCallback(
-    (content: string) => {
+    (content: string, backend: string | null = null) => {
       const trimmed = content.trim();
       if (!threadId || trimmed.length === 0) return;
       const pending: PendingMessage = {
         threadId,
-        clientRequestId: globalThis.crypto.randomUUID(), content: trimmed, status: "sending",
+        clientRequestId: globalThis.crypto.randomUUID(),
+        content: trimmed,
+        backend,
+        status: "sending",
       };
       setPendingMessages((current) => [...current, pending]);
       setRequestError(null);

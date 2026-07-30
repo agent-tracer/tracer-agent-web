@@ -182,8 +182,36 @@ describe("durable chat execution API", () => {
         clientRequestId: "request-1",
         content: "hello",
       },
+      undefined,
     );
     expect(response.execution.id).toBe("execution-1");
+  });
+
+  it("대화 자리가 고른 상류로 턴을 접수한다", async () => {
+    mockPostJson.mockResolvedValue({
+      message: {
+        id: "message-1",
+        threadId: "thread-1",
+        role: "user",
+        content: "hello",
+        toolCalls: null,
+        toolCallId: null,
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+      execution,
+    });
+
+    await startChatTurn(
+      ChatThreadId("thread-1"),
+      { clientRequestId: "request-1", content: "hello" },
+      "python",
+    );
+
+    expect(mockPostJson).toHaveBeenCalledWith(
+      "/api/agent/chat/threads/thread-1/messages",
+      { clientRequestId: "request-1", content: "hello" },
+      { backend: "python" },
+    );
   });
 
   it("재진입할 때 실행 목록을 다시 읽고 명시적 취소를 보낸다", async () => {

@@ -17,9 +17,15 @@ const uiConforms: typeof HostUi = ui;
 describe("연합 표면의 대역", () => {
   it("호스트가 내보내는 이름을 빠짐없이 갖는다", () => {
     expect(Object.keys(apiConforms)).toContain("monitorQueryKeys");
-    expect(Object.keys(entitiesConforms)).toEqual(["job", "task", "taskCleanup"]);
+    expect(Object.keys(entitiesConforms)).toEqual([
+      "job",
+      "agentUpstream",
+      "task",
+      "taskCleanup",
+    ]);
     expect(Object.keys(storeConforms)).toContain("useGuidance");
     expect(Object.keys(uiConforms)).toContain("GuidanceText");
+    expect(Object.keys(uiConforms)).toContain("Select");
   });
 
   it("문구 카탈로그는 어떤 항목을 물어도 그 좌표를 돌려준다", () => {

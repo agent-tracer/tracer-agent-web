@@ -26,6 +26,10 @@ export function Pill({ dot: _dot, pulse: _pulse, tone: _tone, ...rest }: Compone
   return <span {...rest} />;
 }
 
+export function Select(props: ComponentPropsWithoutRef<"select">) {
+  return <select {...props} />;
+}
+
 export function StatusDot({ status }: { readonly status: StatusKind }) {
   return <span aria-label={`status: ${status}`} />;
 }
