@@ -4,8 +4,8 @@ export type ChatThreadId = string & { readonly __brand: "ChatThreadId" };
 export const ChatThreadId = (value: string): ChatThreadId =>
   value.trim() as ChatThreadId;
 
-/** 이 스레드에서 마지막 턴을 실행한 구현체다. */
-export type ChatBackend = "python" | "claude-sdk";
+/** 이 스레드의 턴이 향한 상류의 이름이며 배포의 상류 선언이 그 값을 정한다. */
+export type ChatBackend = string;
 
 export type ChatMessageRole = "user" | "assistant" | "tool";
 
