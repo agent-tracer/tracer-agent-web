@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { ExecutionWithScores, ExperimentComparison } from "../model/evaluation.js";
-import { parse, record, status } from "./evaluation.primitives.schema.js";
+import { iso, optional, parse, record, status } from "./evaluation.primitives.schema.js";
 
 const score = z
   .object({
@@ -9,8 +9,9 @@ const score = z
     evaluatorId: z.string(),
     evaluatorVersion: z.string(),
     score: z.number(),
-    label: z.string().nullable(),
-    reason: z.string().nullable(),
+    label: optional(z.string()),
+    reason: optional(z.string()),
+    createdAt: iso,
   })
   .passthrough();
 
@@ -22,9 +23,9 @@ const execution = z
     exampleId: z.string(),
     repetition: z.number().int(),
     status: z.enum(["pending", "running", "succeeded", "failed", "cancelled"]),
-    output: record.nullable(),
-    error: z.string().nullable(),
-    costUsd: z.number(),
+    output: optional(record),
+    error: optional(z.string()),
+    costUsd: optional(z.number()),
   })
   .passthrough();
 

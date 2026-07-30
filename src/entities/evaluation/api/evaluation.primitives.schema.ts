@@ -6,6 +6,16 @@ export const iso = z.string().min(1);
 export const backend = z.string().min(1);
 export const status = z.enum(["draft", "running", "completed", "failed", "cancelled"]);
 
+/** 계약이 필수로 적지 않은 칸은 실리지 않을 수 있으므로 화면은 그것을 비어 있음으로 읽는다. */
+export function optional<T extends z.ZodTypeAny>(schema: T) {
+  return schema.nullish().transform((value) => value ?? null);
+}
+
+/** 계약이 필수로 적지 않은 묶음은 실리지 않을 수 있으므로 화면은 그것을 빈 묶음으로 읽는다. */
+export function optionalRecord<T extends z.ZodTypeAny>(schema: T) {
+  return schema.nullish().transform((value) => value ?? {});
+}
+
 /** 서버 응답이 계약과 다르면 화면이 부분 렌더링으로 흘러가지 않도록 그 자리에서 던진다. */
 export function parse<T>(
   schema: z.ZodTypeAny,

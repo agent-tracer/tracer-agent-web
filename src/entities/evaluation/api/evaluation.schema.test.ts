@@ -35,7 +35,7 @@ describe("evaluation response schemas", () => {
         },
         scores: [{
           id: "s0", executionId: "e0", evaluatorId: "judge", evaluatorVersion: "1",
-          score: 0.5, label: null, reason: null,
+          score: 0.5, label: null, reason: null, createdAt: "2026-01-01",
         }],
       }],
     });
@@ -158,7 +158,7 @@ describe("evaluation response schemas", () => {
         createdAt: "2026-01-01", completedAt: null,
       },
       variants: [{
-        id: "v", name: "candidate", baseline: false, agentName: "task-cleanup", backend: "claude-sdk",
+        id: "v", experimentId: "e", name: "candidate", baseline: false, agentName: "task-cleanup", backend: "claude-sdk",
         promptVersionId: null, toolContractVersion: "1", limits: {},
         fragmentSelections: { "sdk.task-cleanup.investigator.system/suggestionRules": "version-v2" },
       }],

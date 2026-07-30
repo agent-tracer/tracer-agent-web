@@ -30,7 +30,7 @@ const EXPERIMENT = {
   repetitions: 1, createdAt: "2026-01-01", completedAt: null,
 };
 const VARIANT = {
-  id: "variant-1", name: "baseline", baseline: true, backend: "claude-sdk",
+  id: "variant-1", experimentId: "experiment-1", name: "baseline", baseline: true, backend: "claude-sdk",
   agentName: "title-suggestion", promptVersionId: null, toolContractVersion: "1",
   limits: {}, fragmentSelections: {},
 };

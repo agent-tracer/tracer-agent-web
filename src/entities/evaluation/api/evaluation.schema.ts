@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { DatasetDetail, EvaluationDataset, ExperimentDetail, ExperimentPreview, Experiment, HumanReview, PromptDefinition, PromptVersion, PromptFragmentBinding, ExecutionExampleCandidate, RegisterCandidateFragmentVersionResult, ReviewPair } from "../model/evaluation.js";
-import { backend, iso, parse, record, status } from "./evaluation.primitives.schema.js";
+import { backend, iso, optional, optionalRecord, parse, record, status } from "./evaluation.primitives.schema.js";
 
 export { parseComparison, parseExecutions } from "./evaluation.result.schema.js";
 
@@ -68,26 +68,28 @@ const fragment = z.object({
 const variant = z
   .object({
     id: z.string(),
+    experimentId: z.string(),
     name: z.string(),
     baseline: z.boolean(),
     backend,
     agentName: z.string(),
-    promptVersionId: z.string().nullable(),
+    promptVersionId: optional(z.string()),
     toolContractVersion: z.string(),
-    limits: record,
-    fragmentSelections: z.record(z.string()),
+    limits: optionalRecord(record),
+    fragmentSelections: optionalRecord(z.record(z.string())),
   })
   .passthrough();
 const review = z
   .object({
     id: z.string(),
     experimentId: z.string(),
+    userId: z.string(),
     reviewerUserId: z.string(),
     executionAId: z.string(),
     executionBId: z.string(),
     preference: z.enum(["a", "b", "tie"]),
-    reason: z.string().nullable(),
-    correctedOutput: record.nullable(),
+    reason: optional(z.string()),
+    correctedOutput: optional(record),
     createdAt: iso,
   })
   .passthrough();
@@ -101,7 +103,7 @@ const experiment = z
     maxBudgetUsd: z.number(),
     repetitions: z.number().int().positive(),
     createdAt: iso,
-    completedAt: iso.nullable(),
+    completedAt: optional(iso),
   })
   .passthrough();
 

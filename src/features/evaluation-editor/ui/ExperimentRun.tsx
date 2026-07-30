@@ -128,7 +128,9 @@ export function ExperimentRun({
                   </summary>
                   <dl className="mt-2 grid gap-1 text-xs">
                     <div>Example: {row.execution.exampleId}</div>
-                    <div>Cost: ${row.execution.costUsd.toFixed(4)}</div>
+                    {row.execution.costUsd !== null && (
+                      <div>Cost: ${row.execution.costUsd.toFixed(4)}</div>
+                    )}
                     {row.execution.error && <div>Error: {row.execution.error}</div>}
                     {row.scores.map((score) => (
                       <div key={score.id}>

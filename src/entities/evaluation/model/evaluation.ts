@@ -73,6 +73,7 @@ export interface PromptFragmentBinding {
 }
 export interface ExperimentVariant {
   readonly id: string;
+  readonly experimentId: string;
   readonly name: string;
   readonly baseline: boolean;
   readonly backend: PromptBackend;
@@ -119,6 +120,7 @@ export interface EvaluationScore {
   readonly score: number;
   readonly label: string | null;
   readonly reason: string | null;
+  readonly createdAt: string;
 }
 export interface ExperimentExecution {
   readonly id: string;
@@ -129,7 +131,7 @@ export interface ExperimentExecution {
   readonly status: ExecutionStatus;
   readonly output: Record<string, unknown> | null;
   readonly error: string | null;
-  readonly costUsd: number;
+  readonly costUsd: number | null;
 }
 export interface ExecutionWithScores {
   readonly execution: ExperimentExecution;
@@ -187,6 +189,7 @@ export interface ReviewSubmission {
 export interface HumanReview {
   readonly id: string;
   readonly experimentId: string;
+  readonly userId: string;
   readonly reviewerUserId: string;
   readonly executionAId: string;
   readonly executionBId: string;
