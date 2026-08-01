@@ -25,5 +25,4 @@ function section(name: string): Record<string, KeyedMessage> {
 export const GUIDANCE_CATALOG = {
   chat: section("chat"),
   jobs: section("jobs"),
-  evaluation: section("evaluation"),
 } as unknown as GuidanceCatalog;

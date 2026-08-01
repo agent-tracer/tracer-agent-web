@@ -44,20 +44,9 @@ declare module "tracerWeb/guidance" {
     readonly noTrajectory: GuidanceMessage;
   }
 
-  export interface EvaluationGuidance {
-    readonly introduction: GuidanceMessage;
-    readonly disclosure: GuidanceMessage;
-    readonly fragmentLoading: GuidanceMessage;
-    readonly fragmentEmpty: GuidanceMessage;
-    readonly fragmentError: GuidanceMessage;
-    readonly fragmentIntegrity: GuidanceMessage;
-    readonly fragmentSelectionHint: GuidanceMessage;
-  }
-
   export interface GuidanceCatalog {
     readonly chat: ChatGuidance;
     readonly jobs: JobsGuidance;
-    readonly evaluation: EvaluationGuidance;
   }
 
   export interface GuidanceBundle {
