@@ -4,6 +4,7 @@ import type { ChatThreadId } from "~/entities/chat/model/chat.js";
 import type { ChatExecutionRecord, ChatExecutionsListResponse } from "~/entities/chat/model/chat.js";
 import { useChatExecutionsQuery } from "~/entities/chat/api/queries.js";
 import { watchChatExecution } from "~/entities/chat/api/watch-chat-execution.js";
+import { CHAT_STREAM_RECONNECT } from "~/shared/contract/chat-stream.js";
 import { monitorQueryKeys } from "tracerWeb/api";
 
 export function useChatExecutionUpdates(threadId: ChatThreadId | null) {
@@ -20,7 +21,7 @@ export function useChatExecutionUpdates(threadId: ChatThreadId | null) {
       return;
     }
     const controller = new AbortController();
-    let retryDelayMs = 1_000;
+    let retryDelayMs = CHAT_STREAM_RECONNECT.initialBackoffMs;
 
     const watch = async (): Promise<void> => {
       while (!controller.signal.aborted) {
@@ -31,7 +32,7 @@ export function useChatExecutionUpdates(threadId: ChatThreadId | null) {
             active.id,
             {
               onOpen: () => {
-                retryDelayMs = 1_000;
+                retryDelayMs = CHAT_STREAM_RECONNECT.initialBackoffMs;
                 setStreamStatus("connected");
               },
               onSnapshot: (snapshot) => {
@@ -52,7 +53,7 @@ export function useChatExecutionUpdates(threadId: ChatThreadId | null) {
         }
         setStreamStatus("failed");
         await abortableDelay(retryDelayMs, controller.signal);
-        retryDelayMs = Math.min(retryDelayMs * 2, 10_000);
+        retryDelayMs = Math.min(retryDelayMs * 2, CHAT_STREAM_RECONNECT.maxBackoffMs);
       }
     };
 

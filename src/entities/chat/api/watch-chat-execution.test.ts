@@ -8,7 +8,7 @@ vi.stubGlobal("fetch", fetchMock);
 beforeEach(() => fetchMock.mockReset());
 
 describe("watchChatExecution", () => {
-  it("분할된 snapshot 프레임을 복원하고 terminal 상태를 끝낸다", async () => {
+  it("event와 data 두 줄로 나뉘어 도착한 snapshot을 복원하고 terminal 상태를 끝낸다", async () => {
     const encoder = new TextEncoder();
     const payload = JSON.stringify({
       execution: {
@@ -28,7 +28,7 @@ describe("watchChatExecution", () => {
       },
       confirmations: [],
     });
-    const frame = `id: 2\nevent: snapshot\ndata: ${payload}\n\n`;
+    const frame = `event: snapshot\ndata: ${payload}\n\n`;
     fetchMock.mockResolvedValue(
       new Response(
         new ReadableStream({
@@ -70,6 +70,21 @@ describe("watchChatExecution", () => {
     const outcome = await watchChatExecution(ChatThreadId("thread-1"), "execution-1", { onOpen: vi.fn(), onSnapshot }, new AbortController().signal);
     expect(onSnapshot).toHaveBeenCalledOnce();
     expect(outcome).toBe("terminal");
+  });
+
+  it("다시 연결할 때 Last-Event-ID를 실어 보내지 않는다", async () => {
+    fetchMock.mockResolvedValue(new Response("event: ping\n\n", { status: 200 }));
+
+    await watchChatExecution(
+      ChatThreadId("thread-1"),
+      "execution-1",
+      { onOpen: vi.fn(), onSnapshot: vi.fn() },
+      new AbortController().signal,
+    );
+
+    const headers = fetchMock.mock.calls[0]?.[1]?.headers as Headers;
+    expect(headers.has("Last-Event-ID")).toBe(false);
+    expect(headers.get("Accept")).toBe("text/event-stream");
   });
 
   it("잘못된 프레임을 건너뛰고 여러 data 줄의 다음 snapshot을 읽는다", async () => {
