@@ -6,18 +6,24 @@ import {
   type AgentBackendChoice,
 } from "~/features/agent-backend/use-agent-backend-choice.js";
 
+const { catalog } = vi.hoisted(() => ({
+  catalog: { current: { upstreams: [{ name: "ts" }, { name: "python" }] } },
+}));
+
 vi.mock("tracerWeb/entities", async (importActual) => {
   const actual = await importActual<typeof HostEntities>();
   return {
     ...actual,
     agentUpstream: {
       ...actual.agentUpstream,
-      useAgentUpstreamsQuery: () => ({
-        data: { upstreams: [{ name: "ts" }, { name: "python" }] },
-      }),
+      useAgentUpstreamsQuery: () => ({ data: catalog.current }),
     },
   };
 });
+
+function declare(...names: readonly string[]) {
+  catalog.current = { upstreams: names.map((name) => ({ name })) };
+}
 
 function Probe({
   threadId,
@@ -53,7 +59,10 @@ function mount(threadId: string | null) {
   return { choice: ref, open };
 }
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  declare("ts", "python");
+});
 
 describe("useAgentBackendChoice", () => {
   it("아직 고르지 않은 대화는 첫 상류로 시작한다", () => {
@@ -78,6 +87,12 @@ describe("useAgentBackendChoice", () => {
     open("thread-1");
 
     expect(choice.current.value).toBe("python");
+  });
+
+  it("축이 하나뿐인 배포에서는 축을 지목하지 않는다", () => {
+    declare("ts");
+
+    expect(mount("thread-1").choice.current.value).toBeNull();
   });
 
   it("연 대화가 없으면 고르지 못한다", () => {

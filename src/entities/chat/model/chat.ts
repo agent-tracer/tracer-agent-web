@@ -1,11 +1,13 @@
+import type { AgentAxis } from "~/shared/contract/agent-axis.js";
+
 /** 대화 스레드 하나를 가리키는 식별자다. */
 export type ChatThreadId = string & { readonly __brand: "ChatThreadId" };
 
 export const ChatThreadId = (value: string): ChatThreadId =>
   value.trim() as ChatThreadId;
 
-/** 이 스레드의 턴이 향한 상류의 이름이며 배포의 상류 선언이 그 값을 정한다. */
-export type ChatBackend = string;
+/** 이 스레드의 턴이 향한 축이며 배포가 선언한 상류의 이름이 곧 그 값이다. */
+export type ChatBackend = AgentAxis;
 
 export type ChatMessageRole = "user" | "assistant" | "tool";
 

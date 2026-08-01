@@ -42,7 +42,7 @@ function execution(
     threadId: ChatThreadId("thread-1"),
     userMessageId: "message-1",
     status: "running",
-    requestedBackend: "claude-sdk",
+    requestedBackend: "ts",
     draftText: "partial answer",
     draftSeq: 1,
     assistantMessageId: null,
