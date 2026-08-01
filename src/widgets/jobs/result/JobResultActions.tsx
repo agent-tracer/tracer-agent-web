@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { TaskId } from "~/widgets/jobs/lib/task-id.js";
-import { EVALUABLE_JOB_KINDS, evaluationImportJobHref } from "~/features/evaluation-editor/lib/evaluable-jobs.js";
 import { useGuidance } from "tracerWeb/store";
 import { Button, EmptyHint, GuidanceText, SectionLabel } from "tracerWeb/ui";
 import { summarizeResult } from "~/widgets/jobs/lib/job-view.js";
@@ -21,19 +20,7 @@ interface JobResultActionsProps {
 export function JobResultActions({ job }: JobResultActionsProps) {
   if (job.status !== JOB_STATUS.completed) return null;
 
-  return (
-    <>
-      <JobResultKindActions job={job} />
-      {EVALUABLE_JOB_KINDS.has(job.kind) && (
-        <Link
-          className="text-[12px] text-[var(--primary-hover)] underline"
-          to={evaluationImportJobHref(job.id)}
-        >
-          Add as evaluation example
-        </Link>
-      )}
-    </>
-  );
+  return <JobResultKindActions job={job} />;
 }
 
 function JobResultKindActions({ job }: JobResultActionsProps) {

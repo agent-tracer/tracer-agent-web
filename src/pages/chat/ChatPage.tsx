@@ -4,7 +4,6 @@ import { useChatMessagesQuery, useChatThreadsQuery } from "~/entities/chat/api/q
 import { useChatTurn } from "~/features/chat-send/useChatTurn.js";
 import { AgentBackendSelect } from "~/features/agent-backend/AgentBackendSelect.js";
 import { useAgentBackendChoice } from "~/features/agent-backend/use-agent-backend-choice.js";
-import { AddChatExecutionLink } from "~/features/evaluation-editor/ui/AddChatExecutionLink.js";
 import { useGuidance } from "tracerWeb/store";
 import { EmptyView, GuidanceText } from "tracerWeb/ui";
 import { ChatComposer } from "~/widgets/chat/ChatComposer.js";
@@ -74,9 +73,6 @@ export function ChatPage() {
               <div className="px-4 py-2.5 border-b border-hair flex items-center gap-2.5 shrink-0">
                 <ChatThreadTitleEditor key={selectedThread.id} thread={selectedThread} />
                 <AgentBackendSelect value={backend.value} onChange={backend.select} />
-                <span className="ml-auto">
-                  <AddChatExecutionLink threadId={selectedThread.id} />
-                </span>
               </div>
 
               <ChatMessageStream
