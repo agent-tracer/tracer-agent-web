@@ -27,6 +27,8 @@ export interface OptimisticChatMessage {
 
 export interface UseChatTurnResult {
   readonly isStreaming: boolean;
+  /** 재시도가 초안을 되돌려 답변을 처음부터 다시 쓰는 중이다. */
+  readonly isRewritingDraft: boolean;
   readonly pendingMessages: readonly OptimisticChatMessage[];
   readonly activeProcess: string;
   readonly completedProcesses: readonly CompletedTurnProcess[];
@@ -43,7 +45,8 @@ export interface UseChatTurnResult {
 /** 접수된 실행을 서버에서 다시 읽어 화면 이탈과 새로고침 뒤에도 같은 턴을 이어 본다. */
 export function useChatTurn(threadId: ChatThreadId | null): UseChatTurnResult {
   const queryClient = useQueryClient();
-  const executionsQuery = useChatExecutionUpdates(threadId);
+  const executionUpdates = useChatExecutionUpdates(threadId);
+  const executionsQuery = executionUpdates.query;
   const [pendingMessages, setPendingMessages] = useState<readonly PendingMessage[]>([]);
   const [requestError, setRequestError] = useState<string | null>(null);
   const seenTerminalRef = useRef(new Set<string>());
@@ -234,6 +237,8 @@ export function useChatTurn(threadId: ChatThreadId | null): UseChatTurnResult {
     () => ({
       isStreaming:
         running !== null || queued.length > 0 || pendingMessages.some((row) => row.status !== "failed"),
+      isRewritingDraft:
+        running !== null && running.id === executionUpdates.rewritingExecutionId,
       pendingMessages: pendingMessages.filter((message) => message.threadId === threadId).map((message) => ({
         clientRequestId: message.clientRequestId,
         content: message.content,
@@ -261,6 +266,7 @@ export function useChatTurn(threadId: ChatThreadId | null): UseChatTurnResult {
       dismissConfirm,
       latest,
       executionsQuery.data?.confirmations,
+      executionUpdates.rewritingExecutionId,
       executions,
       pendingMessages,
       queued.length,

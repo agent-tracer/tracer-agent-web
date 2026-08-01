@@ -1,13 +1,21 @@
 import { ChatMarkdown } from "~/widgets/chat/ChatMarkdown.js";
 
-export function ChatProcess({ content, active = false }: { readonly content: string; readonly active?: boolean }) {
+export function ChatProcess({
+  content,
+  active = false,
+  rewriting = false,
+}: {
+  readonly content: string;
+  readonly active?: boolean;
+  readonly rewriting?: boolean;
+}) {
   return (
     <details
       open={active || undefined}
       className="self-start max-w-[75%] rounded-md border border-hair bg-s0 px-3 py-2 text-ink-subtle"
     >
       <summary className="cursor-pointer select-none text-[11.5px] font-medium text-ink-subtle">
-        {active ? "Working…" : "Process"}
+        {rewriting ? "Rewriting…" : active ? "Working…" : "Process"}
       </summary>
       <div className="mt-2 border-t border-hair pt-2 text-[12px] opacity-80">
         <ChatMarkdown content={content} />

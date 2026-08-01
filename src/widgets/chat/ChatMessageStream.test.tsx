@@ -16,6 +16,7 @@ beforeEach(() => {
 function turn(overrides: Partial<UseChatTurnResult>): UseChatTurnResult {
   return {
     isStreaming: false,
+    isRewritingDraft: false,
     pendingMessages: [],
     activeProcess: "",
     completedProcesses: [],
@@ -154,6 +155,13 @@ describe("ChatMessageStream", () => {
     renderStream(turn({ isStreaming: true, activeProcess: "working detail" }));
     expect(screen.getByText("Working…")).not.toBeNull();
     expect(screen.queryByText("Thinking…")).toBeNull();
+  });
+
+  it("초안이 되돌아간 동안에도 자리를 지키고 다시 쓰는 중임을 보여 준다", () => {
+    renderStream(turn({ isStreaming: true, activeProcess: "", isRewritingDraft: true }));
+
+    expect(screen.getByText("Rewriting…")).not.toBeNull();
+    expect(screen.queryByText("chat.thinking")).toBeNull();
   });
 
   it("실패한 메시지에서 재시도와 삭제를 제공한다", () => {

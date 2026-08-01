@@ -56,7 +56,7 @@ export function ChatMessageStream({
 
   // 도구도 델타도 아직 없는 침묵 구간에도 살아 있음을 보이도록, 스트리밍이 시작됐지만 보여 줄 게 없을 때 진행 인디케이터를 띄운다.
   const showThinking =
-    turn.isStreaming && turn.activeProcess.length === 0;
+    turn.isStreaming && turn.activeProcess.length === 0 && !turn.isRewritingDraft;
 
   const jumpToLatest = () => {
     followTailRef.current = true;
@@ -115,8 +115,12 @@ export function ChatMessageStream({
             </div>
           ))}
 
-          {turn.activeProcess.length > 0 && (
-            <ChatProcess content={turn.activeProcess} active />
+          {(turn.activeProcess.length > 0 || turn.isRewritingDraft) && (
+            <ChatProcess
+              content={turn.activeProcess}
+              active
+              rewriting={turn.isRewritingDraft}
+            />
           )}
 
           {showThinking && (

@@ -105,6 +105,45 @@ describe("useChatExecutionUpdates", () => {
     expect(watchChatExecutionMock).toHaveBeenCalledTimes(3);
   });
 
+  it("초안이 줄어든 프레임을 받으면 고점을 되찾을 때까지 다시 쓰는 중임을 알린다", async () => {
+    let watched: ChatExecutionWatchHandlers | null = null;
+    watchChatExecutionMock.mockImplementation(
+      (
+        _threadId: ChatThreadId,
+        _executionId: string,
+        handlers: ChatExecutionWatchHandlers,
+      ) => {
+        watched = handlers;
+        return new Promise<never>(() => undefined);
+      },
+    );
+
+    const { result } = mount();
+    await settle();
+
+    const snapshot = (draftText: string, draftSeq: number) => ({
+      execution: execution({ draftText, draftSeq }),
+      confirmations: [],
+    });
+    const notify = async (draftText: string, draftSeq: number) => {
+      await act(async () => {
+        watched?.onSnapshot(snapshot(draftText, draftSeq));
+      });
+    };
+
+    await notify("답변을 쓰는 중", 3);
+    expect(result.current.rewritingExecutionId).toBeNull();
+
+    await notify("", 0);
+    expect(result.current.rewritingExecutionId).toBe("execution-1");
+
+    await notify("답변을", 1);
+    expect(result.current.rewritingExecutionId).toBe("execution-1");
+
+    await notify("답변을 다시 쓰는 중", 4);
+    expect(result.current.rewritingExecutionId).toBeNull();
+  });
+
   it("연결이 열리면 물러선 간격이 처음 값으로 돌아간다", async () => {
     watchChatExecutionMock
       .mockResolvedValueOnce("disconnected")

@@ -1,17 +1,26 @@
-import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import type { ChatThreadId } from "~/entities/chat/model/chat.js";
 import type { ChatExecutionRecord, ChatExecutionsListResponse } from "~/entities/chat/model/chat.js";
 import { useChatExecutionsQuery } from "~/entities/chat/api/queries.js";
 import { watchChatExecution } from "~/entities/chat/api/watch-chat-execution.js";
+import { advanceDraftHighWater, isRewritingDraft, type DraftHighWater } from "~/features/chat-send/turn.view.js";
 import { CHAT_STREAM_RECONNECT } from "~/shared/contract/chat-stream.js";
 import { monitorQueryKeys } from "tracerWeb/api";
 
-export function useChatExecutionUpdates(threadId: ChatThreadId | null) {
+export interface ChatExecutionUpdates {
+  readonly query: UseQueryResult<ChatExecutionsListResponse>;
+  /** 초안이 되돌아간 뒤 아직 되찾지 못한 실행이며 화면이 다시 쓰는 중임을 알린다. */
+  readonly rewritingExecutionId: string | null;
+}
+
+export function useChatExecutionUpdates(threadId: ChatThreadId | null): ChatExecutionUpdates {
   const queryClient = useQueryClient();
   const [streamStatus, setStreamStatus] = useState<
     "idle" | "connecting" | "connected" | "failed"
   >("idle");
+  const [rewritingExecutionId, setRewritingExecutionId] = useState<string | null>(null);
+  const highWaterRef = useRef<DraftHighWater | null>(null);
   const executionsQuery = useChatExecutionsQuery(threadId, streamStatus);
   const active = findActiveExecution(executionsQuery.data?.executions ?? []);
 
@@ -22,6 +31,8 @@ export function useChatExecutionUpdates(threadId: ChatThreadId | null) {
     }
     const controller = new AbortController();
     let retryDelayMs = CHAT_STREAM_RECONNECT.initialBackoffMs;
+    highWaterRef.current = null;
+    setRewritingExecutionId(null);
 
     const watch = async (): Promise<void> => {
       while (!controller.signal.aborted) {
@@ -36,6 +47,11 @@ export function useChatExecutionUpdates(threadId: ChatThreadId | null) {
                 setStreamStatus("connected");
               },
               onSnapshot: (snapshot) => {
+                const highWater = advanceDraftHighWater(highWaterRef.current, snapshot.execution);
+                highWaterRef.current = highWater;
+                setRewritingExecutionId(
+                  isRewritingDraft(highWater, snapshot.execution) ? snapshot.execution.id : null,
+                );
                 queryClient.setQueryData<ChatExecutionsListResponse>(
                   monitorQueryKeys.chatExecutions(threadId),
                   (current) => ({
@@ -61,7 +77,7 @@ export function useChatExecutionUpdates(threadId: ChatThreadId | null) {
     return () => controller.abort();
   }, [active?.id, queryClient, threadId]);
 
-  return executionsQuery;
+  return { query: executionsQuery, rewritingExecutionId };
 }
 
 function findActiveExecution(
