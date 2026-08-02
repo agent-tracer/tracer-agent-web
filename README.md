@@ -1,6 +1,6 @@
 # tracer-agent-web
 
-에이전트 서비스의 화면입니다. 대화와 잡과 평가를 보여주고 새 실행을 접수합니다. React 19와 Vite로 빌드하며 Module Federation 리모트로 추적 대시보드에 연결됩니다.
+에이전트 서비스의 화면입니다. 대화와 잡을 보여주고 새 실행을 접수합니다. React 19와 Vite로 빌드하며 Module Federation 리모트로 추적 대시보드에 연결됩니다.
 
 계약이 정한 HTTP 표면만 보므로 어느 구현체가 떠 있는지 알지 않습니다. API 서버가 아니고 데이터베이스도 갖지 않습니다. 빌드 산출물은 `remoteEntry.js`와 정적 청크이며, 추적 대시보드 호스트가 이것을 `/agent/` 경로 아래에 펼칩니다.
 
@@ -38,7 +38,6 @@ flowchart LR
 
 - 대화 스레드·메시지·실행 단계와 실시간 실행 상태
 - 잡 목록·필터·상세·경로와 결과 동작
-- 데이터셋·프롬프트·실험·검토로 이루어진 평가 화면
 - 구현체 선택
 - 호스트 UI·라우터·singleton 공유
 - 스트림과 폴링 대체 경로, React Query 캐시 동기화
@@ -81,7 +80,7 @@ docker build -t tracer-agent-web:latest .
 tracer-agent-web/
 ├── src/
 │   ├── entities/              chat·evaluation 의 API·모델과 도메인 UI
-│   ├── features/              대화 전송·평가 편집·구현체 선택
+│   ├── features/              대화 전송·구현체 선택
 │   ├── pages/                 chat·jobs·evaluation
 │   ├── widgets/               chat·jobs 화면 조각
 │   ├── routes.ts              호스트가 펼치는 라우트 배열
