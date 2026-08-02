@@ -1,6 +1,32 @@
-import { describe, expect, it } from "vitest";
+import { createElement, type ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type * as HostApi from "tracerWeb/api";
 import { ChatThreadId, type ChatExecutionRecord, type ChatExecutionsListResponse } from "~/entities/chat/model/chat.js";
-import { chatExecutionPollInterval, mergeExecutionResponses } from "./queries.js";
+import {
+  chatExecutionPollInterval,
+  mergeExecutionResponses,
+  useChatExecutionsQuery,
+  useChatMessagesQuery,
+  useChatThreadsQuery,
+} from "./queries.js";
+
+const { backendSettled, chatApi } = vi.hoisted(() => ({
+  backendSettled: { current: false },
+  chatApi: {
+    fetchChatThreads: vi.fn(),
+    fetchChatMessages: vi.fn(),
+    fetchChatExecutions: vi.fn(),
+  },
+}));
+
+vi.mock("tracerWeb/api", async (importActual) => {
+  const actual = await importActual<typeof HostApi>();
+  return { ...actual, useAgentBackendSettled: () => backendSettled.current };
+});
+
+vi.mock("~/entities/chat/api/api-chat.js", () => chatApi);
 
 function execution(
   status: ChatExecutionRecord["status"],
@@ -66,6 +92,53 @@ describe("chatExecutionPollInterval", () => {
         response([execution("completed", "2026-07-22T00:00:59.000Z")], [CONFIRMATION]),
       ),
     ).toBe(5_000);
+  });
+});
+
+function wrapper(client: QueryClient) {
+  return ({ children }: { readonly children: ReactNode }) =>
+    createElement(QueryClientProvider, { client }, children);
+}
+
+function mountChatQueries() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return renderHook(
+    () => {
+      useChatThreadsQuery();
+      useChatMessagesQuery(ChatThreadId("thread-1"));
+      useChatExecutionsQuery(ChatThreadId("thread-1"));
+    },
+    { wrapper: wrapper(client) },
+  );
+}
+
+beforeEach(() => {
+  backendSettled.current = false;
+  chatApi.fetchChatThreads.mockReset().mockResolvedValue({ threads: [] });
+  chatApi.fetchChatMessages.mockReset().mockResolvedValue({ messages: [] });
+  chatApi.fetchChatExecutions.mockReset().mockResolvedValue(response([]));
+});
+
+afterEach(() => cleanup());
+
+describe("대화 조회", () => {
+  it("축이 정해지기 전에는 조회를 내보내지 않는다", () => {
+    mountChatQueries();
+
+    expect(chatApi.fetchChatThreads).not.toHaveBeenCalled();
+    expect(chatApi.fetchChatMessages).not.toHaveBeenCalled();
+    expect(chatApi.fetchChatExecutions).not.toHaveBeenCalled();
+  });
+
+  it("축이 정해진 뒤에 스레드와 대화와 실행을 읽는다", async () => {
+    backendSettled.current = true;
+    mountChatQueries();
+
+    await waitFor(() => {
+      expect(chatApi.fetchChatThreads).toHaveBeenCalledOnce();
+      expect(chatApi.fetchChatMessages).toHaveBeenCalledOnce();
+      expect(chatApi.fetchChatExecutions).toHaveBeenCalledOnce();
+    });
   });
 });
 

@@ -47,6 +47,7 @@ describe("watchChatExecution", () => {
     const outcome = await watchChatExecution(
       ChatThreadId("thread-1"),
       "execution-1",
+      null,
       { onOpen, onSnapshot },
       new AbortController().signal,
     );
@@ -67,7 +68,7 @@ describe("watchChatExecution", () => {
     const frame = `event: snapshot${separator}data: ${payload}${ending}`;
     fetchMock.mockResolvedValue(new Response(frame, { status: 200 }));
     const onSnapshot = vi.fn();
-    const outcome = await watchChatExecution(ChatThreadId("thread-1"), "execution-1", { onOpen: vi.fn(), onSnapshot }, new AbortController().signal);
+    const outcome = await watchChatExecution(ChatThreadId("thread-1"), "execution-1", null, { onOpen: vi.fn(), onSnapshot }, new AbortController().signal);
     expect(onSnapshot).toHaveBeenCalledOnce();
     expect(outcome).toBe("terminal");
   });
@@ -78,6 +79,7 @@ describe("watchChatExecution", () => {
     await watchChatExecution(
       ChatThreadId("thread-1"),
       "execution-1",
+      null,
       { onOpen: vi.fn(), onSnapshot: vi.fn() },
       new AbortController().signal,
     );
@@ -85,6 +87,22 @@ describe("watchChatExecution", () => {
     const headers = fetchMock.mock.calls[0]?.[1]?.headers as Headers;
     expect(headers.has("Last-Event-ID")).toBe(false);
     expect(headers.get("Accept")).toBe("text/event-stream");
+  });
+
+  it("실행을 받은 축에 스트림을 연다", async () => {
+    fetchMock.mockResolvedValue(new Response("event: ping\n\n", { status: 200 }));
+
+    await watchChatExecution(
+      ChatThreadId("thread-1"),
+      "execution-1",
+      "python",
+      { onOpen: vi.fn(), onSnapshot: vi.fn() },
+      new AbortController().signal,
+    );
+
+    expect(fetchMock.mock.calls[0]?.[0] as string).toMatch(
+      /\/executions\/execution-1\/events\?backend=python$/,
+    );
   });
 
   it("잘못된 프레임을 건너뛰고 여러 data 줄의 다음 snapshot을 읽는다", async () => {
@@ -99,7 +117,7 @@ describe("watchChatExecution", () => {
     fetchMock.mockResolvedValue(new Response(`event: snapshot\ndata: {bad}\n\nevent: snapshot\n${pretty}\n\n`, { status: 200 }));
     const onSnapshot = vi.fn();
 
-    const outcome = await watchChatExecution(ChatThreadId("thread-1"), "execution-1", { onOpen: vi.fn(), onSnapshot }, new AbortController().signal);
+    const outcome = await watchChatExecution(ChatThreadId("thread-1"), "execution-1", null, { onOpen: vi.fn(), onSnapshot }, new AbortController().signal);
 
     expect(onSnapshot).toHaveBeenCalledOnce();
     expect(outcome).toBe("terminal");

@@ -28,6 +28,20 @@ export function createResponseError(
   return Promise.resolve(new Error(`${method} ${pathname}: ${response.status}`));
 }
 
+export function routeToAgentBackend(
+  pathname: string,
+  options?: { readonly backend?: string },
+): string {
+  const backend = options?.backend ?? null;
+  if (backend === null || !pathname.startsWith("/api/agent/")) return pathname;
+  const separator = pathname.includes("?") ? "&" : "?";
+  return `${pathname}${separator}backend=${encodeURIComponent(backend)}`;
+}
+
+export function useAgentBackendSettled(): boolean {
+  return true;
+}
+
 export function getMonitorApiBaseUrl(): string {
   return "";
 }

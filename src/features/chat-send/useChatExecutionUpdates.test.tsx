@@ -76,6 +76,25 @@ afterEach(() => {
 });
 
 describe("useChatExecutionUpdates", () => {
+  it("실행을 받은 축으로 스트림을 연다", async () => {
+    fetchChatExecutionsMock.mockResolvedValue({
+      executions: [execution({ requestedBackend: "python" })],
+      confirmations: [],
+    });
+    watchChatExecutionMock.mockResolvedValue("terminal");
+
+    mount();
+    await settle();
+
+    expect(watchChatExecutionMock).toHaveBeenCalledWith(
+      ChatThreadId("thread-1"),
+      "execution-1",
+      "python",
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
   it("종결 상태를 실은 프레임을 받으면 다시 연결하지 않는다", async () => {
     watchChatExecutionMock.mockResolvedValue("terminal");
 
@@ -111,6 +130,7 @@ describe("useChatExecutionUpdates", () => {
       (
         _threadId: ChatThreadId,
         _executionId: string,
+        _backend: string | null,
         handlers: ChatExecutionWatchHandlers,
       ) => {
         watched = handlers;
@@ -151,6 +171,7 @@ describe("useChatExecutionUpdates", () => {
         (
           _threadId: ChatThreadId,
           _executionId: string,
+          _backend: string | null,
           handlers: ChatExecutionWatchHandlers,
         ) => {
           handlers.onOpen();

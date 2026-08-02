@@ -98,6 +98,12 @@ declare module "tracerWeb/api" {
     method: string,
   ): Promise<Error>;
 
+  /** 요청 층을 거치지 않고 URL을 직접 만드는 자리가 같은 축을 싣는 통로다. */
+  export function routeToAgentBackend(pathname: string, options?: RequestOptions): string;
+
+  /** 상류 목록을 읽어 축이 정해졌는지 알리며 그전의 조회는 축 없이 나간다. */
+  export function useAgentBackendSettled(): boolean;
+
   export function getMonitorApiBaseUrl(): string;
   export function getUserId(): string | null;
 

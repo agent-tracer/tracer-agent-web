@@ -1,6 +1,6 @@
 import type { ChatConfirmationRecord, ChatExecutionRecord, ChatThreadId } from "~/entities/chat/model/chat.js";
 import { CHAT_THREADS_PATH, summarizeToolRequest } from "~/entities/chat/api/api-chat.js";
-import { getMonitorApiBaseUrl, getUserId, createResponseError } from "tracerWeb/api";
+import { getMonitorApiBaseUrl, getUserId, createResponseError, routeToAgentBackend } from "tracerWeb/api";
 
 interface ChatExecutionSnapshotWire {
   readonly execution: ChatExecutionRecord;
@@ -24,6 +24,7 @@ export interface ChatExecutionWatchHandlers {
 export async function watchChatExecution(
   threadId: ChatThreadId,
   executionId: string,
+  backend: string | null,
   handlers: ChatExecutionWatchHandlers,
   signal: AbortSignal,
 ): Promise<"terminal" | "disconnected"> {
@@ -31,7 +32,8 @@ export async function watchChatExecution(
   const headers = new Headers({ Accept: "text/event-stream" });
   const userId = getUserId();
   if (userId) headers.set("x-monitor-user", userId);
-  const response = await fetch(`${getMonitorApiBaseUrl()}${pathname}`, {
+  const route = routeToAgentBackend(pathname, backend ? { backend } : undefined);
+  const response = await fetch(`${getMonitorApiBaseUrl()}${route}`, {
     credentials: "include",
     headers,
     signal,

@@ -41,6 +41,7 @@ export function useChatExecutionUpdates(threadId: ChatThreadId | null): ChatExec
           const outcome = await watchChatExecution(
             threadId,
             active.id,
+            active.requestedBackend,
             {
               onOpen: () => {
                 retryDelayMs = CHAT_STREAM_RECONNECT.initialBackoffMs;

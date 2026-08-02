@@ -1,15 +1,17 @@
 import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import type { ChatExecutionsListResponse, ChatMessagesListResponse, ChatThreadId, ChatThreadsListResponse } from "~/entities/chat/model/chat.js";
 import { fetchChatExecutions, fetchChatMessages, fetchChatThreads } from "~/entities/chat/api/api-chat.js";
-import { monitorQueryKeys } from "tracerWeb/api";
+import { monitorQueryKeys, useAgentBackendSettled } from "tracerWeb/api";
 
 const SSE_FALLBACK_POLL_MS = 10_000;
 const PENDING_CONFIRM_POLL_MS = 5_000;
 
 export function useChatThreadsQuery(): UseQueryResult<ChatThreadsListResponse> {
+  const backendSettled = useAgentBackendSettled();
   return useQuery<ChatThreadsListResponse>({
     queryKey: monitorQueryKeys.chatThreads(),
     queryFn: fetchChatThreads,
+    enabled: backendSettled,
   });
 }
 
@@ -18,6 +20,7 @@ export function useChatExecutionsQuery(
   streamStatus: "idle" | "connecting" | "connected" | "failed" = "idle",
 ): UseQueryResult<ChatExecutionsListResponse> {
   const queryClient = useQueryClient();
+  const backendSettled = useAgentBackendSettled();
   const queryKey = threadId
     ? monitorQueryKeys.chatExecutions(threadId)
     : monitorQueryKeys.chatExecutions("__disabled__");
@@ -31,7 +34,7 @@ export function useChatExecutionsQuery(
         incoming,
       );
     },
-    enabled: threadId !== null,
+    enabled: threadId !== null && backendSettled,
     refetchInterval: (query) =>
       chatExecutionPollInterval(query.state.data, streamStatus === "failed"),
   });
@@ -64,6 +67,7 @@ export function chatExecutionPollInterval(
 export function useChatMessagesQuery(
   threadId: ChatThreadId | null,
 ): UseQueryResult<ChatMessagesListResponse> {
+  const backendSettled = useAgentBackendSettled();
   return useQuery({
     queryKey: threadId
       ? monitorQueryKeys.chatMessages(threadId)
@@ -74,6 +78,6 @@ export function useChatMessagesQuery(
       }
       return fetchChatMessages(threadId);
     },
-    enabled: threadId !== null,
+    enabled: threadId !== null && backendSettled,
   });
 }
