@@ -157,8 +157,8 @@ describe("useChatTurn", () => {
       confirmations: [
         {
           id: "confirm-1",
-          toolName: "archive_task",
-          summary: "archive_task(taskId=task-1)",
+          toolName: "propose_task_write",
+          summary: "propose_task_write(action=archive, taskId=task-1)",
           args: { taskId: "task-1" },
         },
       ],
@@ -186,8 +186,8 @@ describe("useChatTurn", () => {
       confirmations: [
         {
           id: "confirm-1",
-          toolName: "archive_task",
-          summary: "archive_task(taskId=task-1)",
+          toolName: "propose_task_write",
+          summary: "propose_task_write(action=archive, taskId=task-1)",
           args: { taskId: "task-1" },
         },
       ],
@@ -208,8 +208,8 @@ describe("useChatTurn", () => {
       confirmations: [
         {
           id: "confirm-1",
-          toolName: "archive_task",
-          summary: "archive_task(taskId=task-1)",
+          toolName: "propose_task_write",
+          summary: "propose_task_write(action=archive, taskId=task-1)",
           args: { taskId: "task-1" },
         },
       ],

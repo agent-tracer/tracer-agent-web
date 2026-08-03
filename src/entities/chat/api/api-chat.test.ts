@@ -220,8 +220,8 @@ describe("durable chat execution API", () => {
       confirmations: [
         {
           id: "confirm-1",
-          toolName: "archive_task",
-          args: { taskId: "task-1" },
+          toolName: "propose_task_write",
+          args: { action: "archive", taskId: "task-1" },
         },
       ],
     });
@@ -236,9 +236,9 @@ describe("durable chat execution API", () => {
     expect(listed.confirmations).toEqual([
       {
         id: "confirm-1",
-        toolName: "archive_task",
-        args: { taskId: "task-1" },
-        summary: "archive_task(taskId=task-1)",
+        toolName: "propose_task_write",
+        args: { action: "archive", taskId: "task-1" },
+        summary: "propose_task_write(action=archive, taskId=task-1)",
       },
     ]);
     expect(mockPostJson).toHaveBeenCalledWith(

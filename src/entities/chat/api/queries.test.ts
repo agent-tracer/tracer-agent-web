@@ -62,7 +62,7 @@ function response(
 
 const CONFIRMATION = {
   id: "confirmation-1",
-  toolName: "archive_task",
+  toolName: "propose_task_write",
   args: {},
   summary: "archive_task(taskId=t1)",
 };

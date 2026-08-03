@@ -23,8 +23,8 @@ beforeEach(() => {
 
 const REQUEST = {
   id: "confirm-1",
-  toolName: "archive_task",
-  summary: "archive_task(taskId=task-1)",
+  toolName: "propose_task_write",
+  summary: "propose_task_write(action=archive, taskId=task-1)",
   args: { taskId: "task-1" },
 };
 
@@ -48,7 +48,7 @@ describe("ChatConfirmCard", () => {
     const followUp = { id: "execution-2" };
     confirmChatToolMock.mockResolvedValue({
       confirmationId: "confirm-1",
-      toolName: "archive_task",
+      toolName: "propose_task_write",
       status: "approved",
       result: "Archived task task-1.",
       execution: followUp,
