@@ -84,6 +84,9 @@ export interface ChatExecutionsListResponse {
   readonly confirmations: readonly ChatConfirmationRecord[];
 }
 
+/** 확인 대기 하나가 놓인 자리이며 해소되면 승인이나 거절 중 하나로 굳는다. */
+export type ChatConfirmationStatus = "pending" | "approved" | "rejected";
+
 export interface ChatConfirmationRecord {
   readonly id: string;
   readonly toolName: string;

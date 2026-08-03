@@ -144,7 +144,7 @@ export function ChatMessageStream({
               key={request.id}
               threadId={threadId}
               request={request}
-              onResolved={turn.dismissConfirm}
+              onResolved={turn.resolveConfirm}
             />
           ))}
 

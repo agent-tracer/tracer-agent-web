@@ -180,6 +180,49 @@ describe("useChatTurn", () => {
     expect(cancelChatExecutionMock).not.toHaveBeenCalled();
   });
 
+  it("승인이 세운 턴을 곧바로 이어 붙이고 그 확인을 목록에서 지운다", async () => {
+    fetchChatExecutionsMock.mockResolvedValue({
+      executions: [],
+      confirmations: [
+        {
+          id: "confirm-1",
+          toolName: "archive_task",
+          summary: "archive_task(taskId=task-1)",
+          args: { taskId: "task-1" },
+        },
+      ],
+    });
+    const followUp = execution({ id: "execution-2", status: "queued", replayAnchorMessageId: "message-9" });
+    const { result } = renderHook(() => useChatTurn(ChatThreadId("thread-1")), { wrapper });
+    await waitFor(() => expect(result.current.pendingConfirms).toHaveLength(1));
+
+    act(() => result.current.resolveConfirm("confirm-1", followUp));
+
+    await waitFor(() => expect(result.current.pendingConfirms).toHaveLength(0));
+    expect(result.current.isStreaming).toBe(true);
+  });
+
+  it("거절은 이어 붙일 턴 없이 그 확인만 지운다", async () => {
+    fetchChatExecutionsMock.mockResolvedValue({
+      executions: [],
+      confirmations: [
+        {
+          id: "confirm-1",
+          toolName: "archive_task",
+          summary: "archive_task(taskId=task-1)",
+          args: { taskId: "task-1" },
+        },
+      ],
+    });
+    const { result } = renderHook(() => useChatTurn(ChatThreadId("thread-1")), { wrapper });
+    await waitFor(() => expect(result.current.pendingConfirms).toHaveLength(1));
+
+    act(() => result.current.resolveConfirm("confirm-1", null));
+
+    await waitFor(() => expect(result.current.pendingConfirms).toHaveLength(0));
+    expect(result.current.isStreaming).toBe(false);
+  });
+
   it("Stop을 눌렀을 때만 서버 실행 취소를 요청한다", async () => {
     const running = execution();
     fetchChatExecutionsMock.mockResolvedValue({

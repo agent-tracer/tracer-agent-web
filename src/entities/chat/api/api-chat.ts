@@ -1,4 +1,4 @@
-import type { ChatMessagesListResponse, ChatMessageRecord, ChatExecutionRecord, ChatExecutionsListResponse, ChatThreadCreateInput, ChatThreadId, ChatThreadRecord, ChatThreadsListResponse } from "~/entities/chat/model/chat.js";
+import type { ChatConfirmationStatus, ChatMessagesListResponse, ChatMessageRecord, ChatExecutionRecord, ChatExecutionsListResponse, ChatThreadCreateInput, ChatThreadId, ChatThreadRecord, ChatThreadsListResponse } from "~/entities/chat/model/chat.js";
 import { deleteRequest, getJson, patchJson, postJson } from "tracerWeb/api";
 import { toChatMessageRecord, toChatThreadRecord, type ChatMessageWireDto, type ChatThreadWireDto } from "~/entities/chat/api/chat.mapper.js";
 
@@ -150,8 +150,10 @@ export interface ConfirmChatToolInput {
 export interface ConfirmChatToolResponse {
   readonly confirmationId: string;
   readonly toolName: string;
-  readonly status: string;
+  readonly status: ChatConfirmationStatus;
   readonly result: string;
+  /** 승인이 세운 후속 턴이며 거절이거나 스레드가 이미 바쁘면 비어 있다. */
+  readonly execution: ChatExecutionRecord | null;
 }
 
 export function confirmChatTool(

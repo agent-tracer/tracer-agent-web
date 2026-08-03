@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ChatThreadId } from "~/entities/chat/model/chat.js";
-import type { ChatExecutionsListResponse, ChatMessageRecord, ChatMessagesListResponse } from "~/entities/chat/model/chat.js";
+import type { ChatExecutionRecord, ChatExecutionsListResponse, ChatMessageRecord, ChatMessagesListResponse } from "~/entities/chat/model/chat.js";
 import type { ChatConfirmRequest } from "~/entities/chat/model/chat-turn.js";
 import { cancelChatExecution, startChatTurn } from "~/entities/chat/api/api-chat.js";
 import { monitorQueryKeys } from "tracerWeb/api";
@@ -39,7 +39,7 @@ export interface UseChatTurnResult {
   readonly stop: () => void;
   readonly retryMessage: (clientRequestId: string) => void;
   readonly dismissMessage: (clientRequestId: string) => void;
-  readonly dismissConfirm: (confirmationId: string) => void;
+  readonly resolveConfirm: (confirmationId: string, execution: ChatExecutionRecord | null) => void;
 }
 
 /** 접수된 실행을 서버에서 다시 읽어 화면 이탈과 새로고침 뒤에도 같은 턴을 이어 본다. */
@@ -215,20 +215,28 @@ export function useChatTurn(threadId: ChatThreadId | null): UseChatTurnResult {
       .catch((error: unknown) => setRequestError(toErrorMessage(error)));
   }, [queryClient, queued, running, threadId]);
 
-  const dismissConfirm = useCallback(
-    (confirmationId: string) => {
+  /** 해소된 확인을 목록에서 지우고, 승인이 세운 턴이 있으면 그 턴을 곧바로 이어 붙인다. */
+  const resolveConfirm = useCallback(
+    (confirmationId: string, execution: ChatExecutionRecord | null) => {
+      if (!threadId) return;
       queryClient.setQueryData<ChatExecutionsListResponse>(
-        threadId ? monitorQueryKeys.chatExecutions(threadId) : [],
-        (current) =>
-          current
-            ? {
-                ...current,
-                confirmations: current.confirmations.filter(
-                  (request) => request.id !== confirmationId,
-                ),
-              }
-            : current,
+        monitorQueryKeys.chatExecutions(threadId),
+        (current) => ({
+          confirmations: (current?.confirmations ?? []).filter(
+            (request) => request.id !== confirmationId,
+          ),
+          executions:
+            execution === null
+              ? (current?.executions ?? [])
+              : [
+                  execution,
+                  ...(current?.executions.filter((row) => row.id !== execution.id) ?? []),
+                ],
+        }),
       );
+      void queryClient.invalidateQueries({
+        queryKey: monitorQueryKeys.chatMessages(threadId),
+      });
     },
     [queryClient, threadId],
   );
@@ -260,10 +268,10 @@ export function useChatTurn(threadId: ChatThreadId | null): UseChatTurnResult {
       stop,
       retryMessage,
       dismissMessage,
-      dismissConfirm,
+      resolveConfirm,
     }),
     [
-      dismissConfirm,
+      resolveConfirm,
       latest,
       executionsQuery.data?.confirmations,
       executionUpdates.rewritingExecutionId,

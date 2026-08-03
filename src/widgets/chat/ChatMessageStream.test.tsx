@@ -27,7 +27,7 @@ function turn(overrides: Partial<UseChatTurnResult>): UseChatTurnResult {
     stop: vi.fn(),
     retryMessage: vi.fn(),
     dismissMessage: vi.fn(),
-    dismissConfirm: vi.fn(),
+    resolveConfirm: vi.fn(),
     ...overrides,
   };
 }
