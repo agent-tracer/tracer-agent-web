@@ -144,7 +144,7 @@ describe("durable chat execution API", () => {
   const execution = {
     id: "execution-1",
     threadId: "thread-1",
-    userMessageId: "message-1",
+    replayAnchorMessageId: "message-1",
     status: "queued" as const,
     requestedBackend: null,
     draftText: "",

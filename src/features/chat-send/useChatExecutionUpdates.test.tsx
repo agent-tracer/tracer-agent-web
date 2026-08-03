@@ -32,7 +32,7 @@ function execution(overrides: Partial<ChatExecutionRecord> = {}): ChatExecutionR
   return {
     id: "execution-1",
     threadId: ChatThreadId("thread-1"),
-    userMessageId: "message-1",
+    replayAnchorMessageId: "message-1",
     status: "running",
     requestedBackend: null,
     draftText: "partial answer",

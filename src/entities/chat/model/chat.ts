@@ -62,7 +62,7 @@ export type ChatStopReason =
 export interface ChatExecutionRecord {
   readonly id: string;
   readonly threadId: ChatThreadId;
-  readonly userMessageId: string;
+  readonly replayAnchorMessageId: string;
   readonly status: ChatExecutionStatus;
   readonly requestedBackend: ChatBackend | null;
   readonly draftText: string;

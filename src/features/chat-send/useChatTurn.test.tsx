@@ -40,7 +40,7 @@ function execution(
   return {
     id: "execution-1",
     threadId: ChatThreadId("thread-1"),
-    userMessageId: "message-1",
+    replayAnchorMessageId: "message-1",
     status: "running",
     requestedBackend: "ts",
     draftText: "partial answer",
@@ -270,7 +270,7 @@ describe("useChatTurn", () => {
       result.current.sendMessage("second");
     });
     const secondMessage = { ...message, id: "message-2", content: "second" };
-    await act(async () => second.resolve({ message: secondMessage, execution: execution({ id: "execution-2", userMessageId: "message-2", status: "queued" }) }));
+    await act(async () => second.resolve({ message: secondMessage, execution: execution({ id: "execution-2", replayAnchorMessageId: "message-2", status: "queued" }) }));
     expect(result.current.pendingMessages.map((row) => row.content)).toEqual(["first", "second"]);
     await act(async () => first.resolve({ message: { ...message, content: "first" }, execution: execution({ status: "queued" }) }));
     await waitFor(() => expect(result.current.pendingMessages).toHaveLength(0));

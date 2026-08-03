@@ -14,7 +14,7 @@ describe("watchChatExecution", () => {
       execution: {
         id: "execution-1",
         threadId: "thread-1",
-        userMessageId: "message-1",
+        replayAnchorMessageId: "message-1",
         status: "completed",
         requestedBackend: null,
         draftText: "answer",
@@ -61,7 +61,7 @@ describe("watchChatExecution", () => {
 
   it.each(["\r\n\r\n", ""])("CRLF 또는 EOF로 끝난 마지막 snapshot을 소비한다", async (ending) => {
     const payload = JSON.stringify({
-      execution: { id: "execution-1", threadId: "thread-1", userMessageId: "message-1", status: "completed", requestedBackend: null, draftText: "answer", draftSeq: 2, assistantMessageId: "message-2", error: null, createdAt: "2026-07-22T00:00:00.000Z", updatedAt: "2026-07-22T00:00:02.000Z", startedAt: null, completedAt: "2026-07-22T00:00:02.000Z" },
+      execution: { id: "execution-1", threadId: "thread-1", replayAnchorMessageId: "message-1", status: "completed", requestedBackend: null, draftText: "answer", draftSeq: 2, assistantMessageId: "message-2", error: null, createdAt: "2026-07-22T00:00:00.000Z", updatedAt: "2026-07-22T00:00:02.000Z", startedAt: null, completedAt: "2026-07-22T00:00:02.000Z" },
       confirmations: [],
     });
     const separator = ending ? "\r\n" : "\n";
@@ -107,7 +107,7 @@ describe("watchChatExecution", () => {
 
   it("잘못된 프레임을 건너뛰고 여러 data 줄의 다음 snapshot을 읽는다", async () => {
     const wire = {
-      execution: { id: "execution-1", threadId: "thread-1", userMessageId: "message-1", status: "completed", requestedBackend: null, draftText: "answer", draftSeq: 2, assistantMessageId: "message-2", error: null, createdAt: "2026-07-22T00:00:00.000Z", updatedAt: "2026-07-22T00:00:02.000Z", startedAt: null, completedAt: "2026-07-22T00:00:02.000Z" },
+      execution: { id: "execution-1", threadId: "thread-1", replayAnchorMessageId: "message-1", status: "completed", requestedBackend: null, draftText: "answer", draftSeq: 2, assistantMessageId: "message-2", error: null, createdAt: "2026-07-22T00:00:00.000Z", updatedAt: "2026-07-22T00:00:02.000Z", startedAt: null, completedAt: "2026-07-22T00:00:02.000Z" },
       confirmations: [],
     };
     const pretty = JSON.stringify(wire, null, 2)

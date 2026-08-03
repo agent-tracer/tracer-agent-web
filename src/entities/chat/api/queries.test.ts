@@ -35,7 +35,7 @@ function execution(
   return {
     id: "execution-1",
     threadId: ChatThreadId("thread-1"),
-    userMessageId: "message-1",
+    replayAnchorMessageId: "message-1",
     status,
     requestedBackend: null,
     draftText: "",
