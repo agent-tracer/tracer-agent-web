@@ -58,9 +58,14 @@ describe("summarizeResult", () => {
     expect(summarizeResult(job)).toBe("1 suggestion");
   });
 
-  it("레시피 스캔은 후보와 개정 건수를 함께 적는다", () => {
-    const job = { ...BASE, result: { candidatesCreated: 2, recipesRevised: 1 } };
-    expect(summarizeResult(job)).toBe("2 candidates · 1 revised");
+  it("레시피 스캔은 후보 목록의 길이를 적는다", () => {
+    const job = { ...BASE, result: { recipes: [{ title: "a" }, { title: "b" }], provenance: {} } };
+    expect(summarizeResult(job)).toBe("2 candidates");
+  });
+
+  it("규칙 생성은 실행기가 실은 규칙 목록의 길이를 적는다", () => {
+    const job = { ...BASE, kind: JOB_KIND.ruleGeneration, result: { rules: [{ id: "r1" }] } };
+    expect(summarizeResult(job)).toBe("1 rule");
   });
 
   it("정리 제안은 제안 목록의 길이와 훑은 태스크 수를 적는다", () => {

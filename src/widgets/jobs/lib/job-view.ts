@@ -64,11 +64,9 @@ export function summarizeResult(job: JobDto): string | null {
         : countLabel(suggestions.length, "suggestion");
     }
     case JOB_KIND.recipeScan: {
-      const created = numberOf(result["candidatesCreated"]);
-      const revised = numberOf(result["recipesRevised"]);
-      if (created === null) return null;
-      const candidates = countLabel(created, "candidate");
-      return revised ? `${candidates} · ${revised} revised` : candidates;
+      const recipes = result["recipes"];
+      if (!Array.isArray(recipes)) return null;
+      return countLabel(recipes.length, "candidate");
     }
     case JOB_KIND.taskCleanup: {
       const suggestions = result["suggestions"];
@@ -77,8 +75,8 @@ export function summarizeResult(job: JobDto): string | null {
       return `${countLabel(suggestions.length, "suggestion")} / ${countLabel(scanned ?? 0, "task")}`;
     }
     case JOB_KIND.ruleGeneration: {
-      const created = numberOf(result["rulesCreated"]);
-      return created === null ? null : countLabel(created, "rule");
+      const rules = result["rules"];
+      return Array.isArray(rules) ? countLabel(rules.length, "rule") : null;
     }
   }
 }
