@@ -71,10 +71,10 @@ export function summarizeResult(job: JobDto): string | null {
       return revised ? `${candidates} · ${revised} revised` : candidates;
     }
     case JOB_KIND.taskCleanup: {
-      const created = numberOf(result["suggestionsCreated"]);
+      const suggestions = result["suggestions"];
       const scanned = numberOf(result["tasksScanned"]);
-      if (created === null) return null;
-      return `${countLabel(created, "suggestion")} / ${countLabel(scanned ?? 0, "task")}`;
+      if (!Array.isArray(suggestions)) return null;
+      return `${countLabel(suggestions.length, "suggestion")} / ${countLabel(scanned ?? 0, "task")}`;
     }
     case JOB_KIND.ruleGeneration: {
       const created = numberOf(result["rulesCreated"]);

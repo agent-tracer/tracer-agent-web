@@ -63,6 +63,18 @@ describe("summarizeResult", () => {
     expect(summarizeResult(job)).toBe("2 candidates · 1 revised");
   });
 
+  it("정리 제안은 제안 목록의 길이와 훑은 태스크 수를 적는다", () => {
+    const job = {
+      ...BASE,
+      kind: JOB_KIND.taskCleanup,
+      result: {
+        suggestions: [{ kind: "archive", taskId: "t1", rationale: "이유", evidenceEventIds: ["e1"] }],
+        tasksScanned: 3,
+      },
+    };
+    expect(summarizeResult(job)).toBe("1 suggestion / 3 tasks");
+  });
+
   it("완료되지 않은 잡은 요약하지 않는다", () => {
     expect(summarizeResult({ ...BASE, status: JOB_STATUS.running })).toBeNull();
   });
