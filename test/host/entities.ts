@@ -46,6 +46,7 @@ export const agentUpstream = {
 
 export const task = {
   useUpdateTaskMutation: () => unstubbed("useUpdateTaskMutation"),
+  fetchTaskDetail: () => unstubbed("fetchTaskDetail"),
 } as const;
 
 export const taskCleanup = {

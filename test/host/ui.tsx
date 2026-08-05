@@ -201,3 +201,11 @@ export function PencilSimpleIcon() {
 export function TrashIcon() {
   return <span aria-hidden />;
 }
+
+export function CopyIcon(_props?: { readonly size?: number; readonly className?: string }) {
+  return <span aria-hidden data-icon="copy" />;
+}
+
+export function CheckIcon(_props?: { readonly size?: number; readonly className?: string }) {
+  return <span aria-hidden data-icon="check" />;
+}

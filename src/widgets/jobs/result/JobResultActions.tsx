@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { TaskId } from "~/widgets/jobs/lib/task-id.js";
+import { TaskId } from "~/entities/task/model/task-id.js";
 import { useGuidance } from "tracerWeb/store";
 import { Button, EmptyHint, GuidanceText, SectionLabel } from "tracerWeb/ui";
 import { summarizeResult } from "~/widgets/jobs/lib/job-view.js";

@@ -244,8 +244,16 @@ declare module "tracerWeb/ui" {
     props: ComponentPropsWithoutRef<"div"> & { readonly value: string },
   ): ReactNode;
 
+  /** 글리프는 크기와 색만 받으며 나머지는 부르는 자리의 버튼이 정한다. */
+  export interface IconProps {
+    readonly size?: number;
+    readonly className?: string;
+  }
+
   export function PencilSimpleIcon(): ReactNode;
   export function TrashIcon(): ReactNode;
+  export function CopyIcon(props?: IconProps): ReactNode;
+  export function CheckIcon(props?: IconProps): ReactNode;
 }
 
 declare module "tracerWeb/entities" {
@@ -367,6 +375,19 @@ declare module "tracerWeb/entities" {
 
   export namespace task {
     type TaskId = string & { readonly __brand: "TaskId" };
+
+    /** 추적 원장이 소유하는 태스크이며 이 저장소는 부를 이름만 읽는다. */
+    interface MonitoringTask {
+      readonly id: TaskId;
+      readonly title: string;
+      readonly displayTitle?: string;
+    }
+
+    interface TaskDetailResponse {
+      readonly task: MonitoringTask;
+    }
+
+    function fetchTaskDetail(taskId: TaskId): Promise<TaskDetailResponse>;
 
     interface UpdateTaskInput {
       readonly title?: string;
