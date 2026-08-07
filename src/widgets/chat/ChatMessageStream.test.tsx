@@ -19,7 +19,9 @@ function turn(overrides: Partial<UseChatTurnResult>): UseChatTurnResult {
     isRewritingDraft: false,
     pendingMessages: [],
     activeProcess: "",
-    completedProcesses: [],
+    activePhase: null,
+    activeSince: null,
+    completedProcesses: new Map(),
     pendingConfirms: [],
     error: null,
     queuedCount: 0,
@@ -58,13 +60,13 @@ describe("ChatMessageStream", () => {
 
     renderStream(
       turn({
-        completedProcesses: [
-          {
+        completedProcesses: new Map([
+          [assistant.id, {
             assistantMessageId: assistant.id,
             transcript: "태스크를 검색해볼게요.최종 답변입니다.",
             stopReason: "completed" as const,
-          },
-        ],
+          }],
+        ]),
       }),
       [assistant],
     );
@@ -72,6 +74,50 @@ describe("ChatMessageStream", () => {
     expect(screen.getByText("Process")).not.toBeNull();
     expect(screen.getByText("태스크를 검색해볼게요.")).not.toBeNull();
     expect(screen.getByText("최종 답변입니다.")).not.toBeNull();
+  });
+
+  it("턴이 끝나고 답변이 아직 목록에 없으면 방금까지 보던 글을 그대로 둔다", () => {
+    renderStream(
+      turn({
+        completedProcesses: new Map([
+          ["message-2", {
+            assistantMessageId: "message-2",
+            transcript: "쓰던 답변입니다.",
+            stopReason: "completed" as const,
+          }],
+        ]),
+      }),
+      [],
+    );
+
+    expect(screen.getByText("쓰던 답변입니다.")).not.toBeNull();
+  });
+
+  it("답변이 목록에 실려 오면 남겨 두었던 글을 거두고 말풍선에만 남긴다", () => {
+    const assistant: ChatMessageRecord = {
+      id: "message-2",
+      threadId: ChatThreadId("thread-1"),
+      role: "assistant",
+      content: "쓰던 답변입니다.",
+      toolCalls: null,
+      toolCallId: null,
+      createdAt: "2026-07-22T00:00:02.000Z",
+    };
+
+    renderStream(
+      turn({
+        completedProcesses: new Map([
+          ["message-2", {
+            assistantMessageId: "message-2",
+            transcript: "쓰던 답변입니다.",
+            stopReason: "completed" as const,
+          }],
+        ]),
+      }),
+      [assistant],
+    );
+
+    expect(screen.getAllByText("쓰던 답변입니다.")).toHaveLength(1);
   });
 
   it("스스로 끝내지 못한 턴에는 왜 멈췄는지를 붙인다", () => {
@@ -87,9 +133,9 @@ describe("ChatMessageStream", () => {
 
     renderStream(
       turn({
-        completedProcesses: [
-          { assistantMessageId: assistant.id, transcript: "", stopReason: "deadline" as const },
-        ],
+        completedProcesses: new Map([
+          [assistant.id, { assistantMessageId: assistant.id, transcript: "", stopReason: "deadline" as const }],
+        ]),
       }),
       [assistant],
     );
@@ -162,6 +208,40 @@ describe("ChatMessageStream", () => {
 
     expect(screen.getByText("Rewriting…")).not.toBeNull();
     expect(screen.queryByText("chat.thinking")).toBeNull();
+  });
+
+  it("도구가 도는 동안에도 무엇을 하는 중인지와 경과를 보여 준다", () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-07-22T00:00:12.000Z"));
+      renderStream(
+        turn({
+          isStreaming: true,
+          activeProcess: "`bash`",
+          activePhase: "tool",
+          activeSince: "2026-07-22T00:00:00.000Z",
+        }),
+      );
+
+      expect(screen.getByText("Running tool…")).not.toBeNull();
+      expect(screen.getByText("12s")).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("답변이 흐르는 동안에는 경과를 세지 않는다", () => {
+    renderStream(
+      turn({
+        isStreaming: true,
+        activeProcess: "답변",
+        activePhase: "responding",
+        activeSince: "2026-07-22T00:00:00.000Z",
+      }),
+    );
+
+    expect(screen.getByText("Working…")).not.toBeNull();
+    expect(screen.queryByText(/^\d+s$/)).toBeNull();
   });
 
   it("실패한 메시지에서 재시도와 삭제를 제공한다", () => {

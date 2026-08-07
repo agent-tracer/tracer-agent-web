@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { ChatMessageRecord } from "~/entities/chat/model/chat.js";
 import { Pill } from "tracerWeb/ui";
 import { cn } from "~/widgets/chat/lib/cn.js";
@@ -9,7 +10,9 @@ interface ChatMessageBubbleProps {
 }
 
 /** 저장된 대화 메시지 한 건이며, role이 tool이면 쓰기 확인이 남긴 결과 노트다. */
-export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
+export const ChatMessageBubble = memo(function ChatMessageBubble({
+  message,
+}: ChatMessageBubbleProps) {
   if (message.role === "tool") {
     return (
       <div className="self-center max-w-[80%] text-[11px] text-ink-tertiary font-mono bg-s1 border border-hair rounded-xs px-2.5 py-1.5">
@@ -59,4 +62,4 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
       )}
     </div>
   );
-}
+});

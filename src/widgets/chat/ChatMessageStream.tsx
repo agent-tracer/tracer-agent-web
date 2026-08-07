@@ -2,6 +2,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import type { ChatThreadId } from "~/entities/chat/model/chat.js";
 import type { ChatMessageRecord } from "~/entities/chat/model/chat.js";
 import type { UseChatTurnResult } from "~/features/chat-send/useChatTurn.js";
+import { settlingTurnProcesses } from "~/features/chat-send/turn.view.js";
 import { useGuidance } from "tracerWeb/store";
 import { GuidanceText, ScrollArea } from "tracerWeb/ui";
 import { ChatConfirmCard } from "~/widgets/chat/ChatConfirmCard.js";
@@ -32,6 +33,12 @@ export function ChatMessageStream({
     setHasNewContentBelow(false);
   }, [threadId]);
 
+  // 턴이 끝나도 답변이 목록에 실려 올 때까지는 방금까지 보던 글을 그대로 둔다.
+  const settling = settlingTurnProcesses(
+    turn.completedProcesses,
+    new Set(messages.map((message) => message.id)),
+  );
+
   useEffect(() => {
     if (followTailRef.current) {
       bottomRef.current?.scrollIntoView({ block: "end" });
@@ -45,6 +52,7 @@ export function ChatMessageStream({
     turn.activeProcess,
     turn.pendingConfirms.length,
     turn.queuedCount,
+    settling.length,
     threadId,
   ]);
 
@@ -52,6 +60,7 @@ export function ChatMessageStream({
     messages.length === 0 &&
     turn.pendingMessages.length === 0 &&
     turn.activeProcess.length === 0 &&
+    settling.length === 0 &&
     !turn.isStreaming;
 
   // 도구도 델타도 아직 없는 침묵 구간에도 살아 있음을 보이도록, 스트리밍이 시작됐지만 보여 줄 게 없을 때 진행 인디케이터를 띄운다.
@@ -88,9 +97,7 @@ export function ChatMessageStream({
           )}
 
           {messages.map((message) => {
-            const completed = turn.completedProcesses.find(
-              (process) => process.assistantMessageId === message.id,
-            );
+            const completed = turn.completedProcesses.get(message.id);
             const transcript = completed?.transcript;
             const process = transcript ? extractProcessText(transcript, message.content) : "";
             return (
@@ -101,6 +108,10 @@ export function ChatMessageStream({
               </Fragment>
             );
           })}
+
+          {settling.map((process) => (
+            <ChatProcess key={process.assistantMessageId} content={process.transcript} active />
+          ))}
 
           {turn.pendingMessages.map((pending) => (
             <div key={pending.clientRequestId} className={pending.status === "failed" ? "contents" : "contents opacity-70"}>
@@ -120,6 +131,8 @@ export function ChatMessageStream({
               content={turn.activeProcess}
               active
               rewriting={turn.isRewritingDraft}
+              phase={turn.activePhase}
+              since={turn.activeSince}
             />
           )}
 

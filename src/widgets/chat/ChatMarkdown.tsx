@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import ReactMarkdown, { type Components } from "react-markdown";
+import { memo, type ReactNode } from "react";
+import ReactMarkdown, { type Components, type Options } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "~/widgets/chat/lib/cn.js";
 
@@ -81,12 +81,16 @@ const components: Components = {
   td: ({ children }) => <td className="border border-hair px-2 py-1 text-ink-muted">{children}</td>,
 };
 
-export function ChatMarkdown({ content }: ChatMarkdownProps) {
+/** 렌더마다 새 배열이면 memo가 먼저 깨지므로 플러그인 목록도 모듈 상수로 둔다. */
+const remarkPlugins: Options["remarkPlugins"] = [remarkGfm];
+
+/** react-markdown이 본문에서 파싱을 동기로 돌리고 스스로 기억하지 않으므로 스냅샷마다 전체 재파싱을 여기서 막는다. */
+export const ChatMarkdown = memo(function ChatMarkdown({ content }: ChatMarkdownProps) {
   return (
     <div className="text-[13px] leading-[1.55] text-ink break-words">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+      <ReactMarkdown remarkPlugins={remarkPlugins} components={components}>
         {content}
       </ReactMarkdown>
     </div>
   );
-}
+});
