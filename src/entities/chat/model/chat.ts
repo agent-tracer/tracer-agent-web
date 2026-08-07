@@ -49,6 +49,10 @@ export interface ChatMessagesListResponse {
 export type ChatExecutionStatus =
   "queued" | "running" | "completed" | "failed" | "canceled";
 
+/** 실행이 지금 무엇을 하는 중인지이며 초안이 자라지 않는 구간에도 살아 있음을 보인다. */
+export type ChatExecutionPhase =
+  "starting" | "thinking" | "responding" | "tool" | "done";
+
 /** 모델이 왜 말을 멈췄는지이며 completed가 아니면 사용자가 이어서 진행할지 정해야 한다. */
 export type ChatStopReason =
   | "completed"
@@ -64,6 +68,7 @@ export interface ChatExecutionRecord {
   readonly threadId: ChatThreadId;
   readonly replayAnchorMessageId: string;
   readonly status: ChatExecutionStatus;
+  readonly phase: ChatExecutionPhase;
   readonly requestedBackend: ChatBackend | null;
   readonly draftText: string;
   readonly draftSeq: number;

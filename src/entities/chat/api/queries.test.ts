@@ -37,6 +37,7 @@ function execution(
     threadId: ChatThreadId("thread-1"),
     replayAnchorMessageId: "message-1",
     status,
+    phase: "responding" as const,
     requestedBackend: null,
     draftText: "",
     draftSeq: 0,

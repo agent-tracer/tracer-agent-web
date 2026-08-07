@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatThreadId } from "~/entities/chat/model/chat.js";
+import { CHAT_STREAM_IDLE_TIMEOUT_MS } from "~/shared/contract/chat-stream.js";
 import { watchChatExecution } from "./watch-chat-execution.js";
 
 const fetchMock = vi.fn();
@@ -103,6 +104,42 @@ describe("watchChatExecution", () => {
     expect(fetchMock.mock.calls[0]?.[0] as string).toMatch(
       /\/executions\/execution-1\/events\?backend=python$/,
     );
+  });
+
+  it("소켓이 열린 채 침묵하면 유휴로 보고 끊어 호출자가 다시 붙게 한다", async () => {
+    vi.useFakeTimers();
+    try {
+      let cancelled = false;
+      fetchMock.mockResolvedValue(
+        new Response(
+          new ReadableStream({
+            start() {
+              // 아무것도 내보내지 않고 닫지도 않아, 죽은 소켓이 열려 있는 상태를 흉내 낸다.
+            },
+            cancel() {
+              cancelled = true;
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+      const onSnapshot = vi.fn();
+
+      const pending = watchChatExecution(
+        ChatThreadId("thread-1"),
+        "execution-1",
+        null,
+        { onOpen: vi.fn(), onSnapshot },
+        new AbortController().signal,
+      );
+      await vi.advanceTimersByTimeAsync(CHAT_STREAM_IDLE_TIMEOUT_MS + 1);
+
+      expect(await pending).toBe("disconnected");
+      expect(onSnapshot).not.toHaveBeenCalled();
+      expect(cancelled).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("잘못된 프레임을 건너뛰고 여러 data 줄의 다음 snapshot을 읽는다", async () => {

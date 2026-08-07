@@ -1,6 +1,7 @@
 import type { ChatConfirmationRecord, ChatExecutionRecord, ChatThreadId } from "~/entities/chat/model/chat.js";
 import { CHAT_THREADS_PATH, summarizeToolRequest } from "~/entities/chat/api/api-chat.js";
 import { getMonitorApiBaseUrl, getUserId, createResponseError, routeToAgentBackend } from "tracerWeb/api";
+import { CHAT_STREAM_IDLE_TIMEOUT_MS } from "~/shared/contract/chat-stream.js";
 
 interface ChatExecutionSnapshotWire {
   readonly execution: ChatExecutionRecord;
@@ -49,7 +50,12 @@ export async function watchChatExecution(
   let terminal = false;
   try {
     for (;;) {
-      const chunk = await reader.read();
+      // 소켓이 열린 채 조용히 죽으면 read가 영원히 대기하므로, 계약의 재전송 주기를 넘겨 침묵하면 끊긴 것으로 본다.
+      const chunk = await readWithIdleTimeout(reader, CHAT_STREAM_IDLE_TIMEOUT_MS);
+      if (chunk === "idle") {
+        await reader.cancel();
+        return "disconnected";
+      }
       if (chunk.done) break;
       buffer += decoder.decode(chunk.value, { stream: true });
       const consumed = consumeSnapshots(normalizeLineEndings(buffer), handlers.onSnapshot);
@@ -69,6 +75,22 @@ export async function watchChatExecution(
     reader.releaseLock();
   }
   return terminal ? "terminal" : "disconnected";
+}
+
+/** 다음 청크를 기다리되 침묵이 한도를 넘으면 `"idle"`을 돌려 호출자가 다시 붙게 한다. */
+async function readWithIdleTimeout(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  idleTimeoutMs: number,
+): Promise<ReadableStreamReadResult<Uint8Array> | "idle"> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const idle = new Promise<"idle">((resolve) => {
+    timer = setTimeout(() => resolve("idle"), idleTimeoutMs);
+  });
+  try {
+    return await Promise.race([reader.read(), idle]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function normalizeLineEndings(value: string): string {
