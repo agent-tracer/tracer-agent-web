@@ -34,6 +34,7 @@ function execution(overrides: Partial<ChatExecutionRecord> = {}): ChatExecutionR
     threadId: ChatThreadId("thread-1"),
     replayAnchorMessageId: "message-1",
     status: "running",
+    phase: "responding",
     requestedBackend: null,
     draftText: "partial answer",
     draftSeq: 3,

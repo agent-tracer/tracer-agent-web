@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ChatThreadId } from "~/entities/chat/model/chat.js";
-import type { ChatExecutionRecord, ChatExecutionsListResponse, ChatMessageRecord, ChatMessagesListResponse } from "~/entities/chat/model/chat.js";
+import type { ChatExecutionPhase, ChatExecutionRecord, ChatExecutionsListResponse, ChatMessageRecord, ChatMessagesListResponse } from "~/entities/chat/model/chat.js";
 import type { ChatConfirmRequest } from "~/entities/chat/model/chat-turn.js";
 import { cancelChatExecution, startChatTurn } from "~/entities/chat/api/api-chat.js";
 import { monitorQueryKeys } from "tracerWeb/api";
@@ -31,7 +31,12 @@ export interface UseChatTurnResult {
   readonly isRewritingDraft: boolean;
   readonly pendingMessages: readonly OptimisticChatMessage[];
   readonly activeProcess: string;
-  readonly completedProcesses: readonly CompletedTurnProcess[];
+  /** 진행 중인 실행이 무엇을 하는 중인지이며 초안이 자라지 않는 구간을 화면이 설명하게 한다. */
+  readonly activePhase: ChatExecutionPhase | null;
+  /** 그 구간이 시작된 시각이며 경과는 화면이 국소적으로 센다. */
+  readonly activeSince: string | null;
+  /** 어시스턴트 메시지 id로 색인한 진행 기록이다. */
+  readonly completedProcesses: ReadonlyMap<string, CompletedTurnProcess>;
   readonly pendingConfirms: readonly ChatConfirmRequest[];
   readonly error: string | null;
   readonly queuedCount: number;
@@ -139,6 +144,7 @@ export function useChatTurn(threadId: ChatThreadId | null): UseChatTurnResult {
             ]);
             return;
           }
+          // 접수 응답의 실행을 바로 위에서 캐시에 심었고 그 뒤는 스트림이 이어 가므로 다시 묻지 않는다.
           setPendingMessages((current) =>
             current.map((row) => {
               if (row.clientRequestId !== pending.clientRequestId) return row;
@@ -146,9 +152,6 @@ export function useChatTurn(threadId: ChatThreadId | null): UseChatTurnResult {
               return { ...withoutError, status: "accepted", acceptedMessage: message };
             }),
           );
-          await queryClient.invalidateQueries({
-            queryKey: monitorQueryKeys.chatExecutions(threadId),
-          });
         })
         .catch((error: unknown) => {
           if (threadIdRef.current !== threadId) return;
@@ -254,13 +257,16 @@ export function useChatTurn(threadId: ChatThreadId | null): UseChatTurnResult {
         error: message.error ?? null,
       })),
       activeProcess: running?.draftText ?? "",
+      activePhase: running?.phase ?? null,
+      activeSince: running?.updatedAt ?? null,
       completedProcesses: completedTurnProcesses(executions),
       pendingConfirms: executionsQuery.data?.confirmations ?? [],
       error:
         requestError ??
         (latest?.status === "failed"
           ? (latest.error ?? "Chat execution failed")
-          : null),
+          : null) ??
+        (executionUpdates.streamDegraded ? "Chat stream disconnected" : null),
       queuedCount:
         queued.length +
         Math.max(0, pendingMessages.filter((message) => message.status !== "failed").length - 1),
@@ -275,6 +281,7 @@ export function useChatTurn(threadId: ChatThreadId | null): UseChatTurnResult {
       latest,
       executionsQuery.data?.confirmations,
       executionUpdates.rewritingExecutionId,
+      executionUpdates.streamDegraded,
       executions,
       pendingMessages,
       queued.length,

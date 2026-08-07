@@ -42,6 +42,7 @@ function execution(
     threadId: ChatThreadId("thread-1"),
     replayAnchorMessageId: "message-1",
     status: "running",
+    phase: "responding",
     requestedBackend: "ts",
     draftText: "partial answer",
     draftSeq: 1,

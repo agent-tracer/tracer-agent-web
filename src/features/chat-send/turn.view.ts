@@ -45,18 +45,29 @@ export function isRewritingDraft(
   );
 }
 
-/** 끝난 실행을 그 턴의 어시스턴트 메시지에 붙일 진행 기록으로 옮긴다. */
+/** 끝난 실행을 그 턴의 어시스턴트 메시지에 붙일 진행 기록으로 옮겨 메시지 id로 색인한다. */
 export function completedTurnProcesses(
   executions: readonly ChatExecutionRecord[],
+): ReadonlyMap<string, CompletedTurnProcess> {
+  const processes = new Map<string, CompletedTurnProcess>();
+  for (const execution of executions) {
+    if (execution.status !== "completed" || execution.assistantMessageId === null) continue;
+    processes.set(execution.assistantMessageId, {
+      assistantMessageId: execution.assistantMessageId,
+      transcript: execution.draftText,
+      stopReason: execution.stopReason,
+    });
+  }
+  return processes;
+}
+
+/** 턴이 끝났지만 그 답변이 아직 목록에 실려 오지 않아 화면을 비우면 글이 사라지는 진행 기록이다. */
+export function settlingTurnProcesses(
+  processes: ReadonlyMap<string, CompletedTurnProcess>,
+  loadedMessageIds: ReadonlySet<string>,
 ): readonly CompletedTurnProcess[] {
-  return executions.flatMap((execution) =>
-    execution.status === "completed" && execution.assistantMessageId !== null
-      ? [{
-          assistantMessageId: execution.assistantMessageId,
-          transcript: execution.draftText,
-          stopReason: execution.stopReason,
-        }]
-      : [],
+  return [...processes.values()].filter(
+    (process) => !loadedMessageIds.has(process.assistantMessageId),
   );
 }
 
